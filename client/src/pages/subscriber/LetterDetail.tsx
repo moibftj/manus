@@ -1,18 +1,50 @@
 import AppLayout from "@/components/shared/AppLayout";
 import StatusBadge from "@/components/shared/StatusBadge";
+import StatusTimeline from "@/components/shared/StatusTimeline";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { FileText, Download, Clock, MessageSquare, ArrowLeft, CheckCircle, AlertCircle } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { FileText, Download, MessageSquare, ArrowLeft, CheckCircle, AlertCircle, Send } from "lucide-react";
 import { Link, useParams } from "wouter";
 import { LETTER_TYPE_CONFIG } from "../../../../shared/types";
+import { useState, useMemo } from "react";
+import { toast } from "sonner";
+
+const IN_PROGRESS_STATUSES = ["submitted", "researching", "drafting", "pending_review"];
 
 export default function LetterDetail() {
   const params = useParams<{ id: string }>();
   const letterId = parseInt(params.id ?? "0");
+  const [updateText, setUpdateText] = useState("");
 
-  const { data, isLoading, error } = trpc.letters.detail.useQuery({ id: letterId }, { enabled: !!letterId });
+  // Poll every 5s for in-progress statuses
+  const { data, isLoading, error } = trpc.letters.detail.useQuery(
+    { id: letterId },
+    {
+      enabled: !!letterId,
+      refetchInterval: (query) => {
+        const status = query.state.data?.letter?.status;
+        return status && IN_PROGRESS_STATUSES.includes(status) ? 5000 : false;
+      },
+    }
+  );
+
+  const updateMutation = trpc.letters.updateForChanges.useMutation({
+    onSuccess: () => {
+      toast.success("Your response has been submitted. The AI pipeline will re-process your letter.");
+      setUpdateText("");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const handleSubmitUpdate = () => {
+    if (updateText.trim().length < 10) {
+      toast.error("Please provide at least 10 characters of additional context.");
+      return;
+    }
+    updateMutation.mutate({ letterId, additionalContext: updateText });
+  };
 
   const handleDownload = () => {
     if (!data?.versions) return;
@@ -54,6 +86,7 @@ export default function LetterDetail() {
   const { letter, actions, versions, attachments } = data;
   const finalVersion = versions?.find((v) => v.versionType === "final_approved");
   const userVisibleActions = actions?.filter((a) => a.noteVisibility === "user_visible" && a.noteText);
+  const isInProgress = IN_PROGRESS_STATUSES.includes(letter.status);
 
   return (
     <AppLayout breadcrumb={[{ label: "My Letters", href: "/letters" }, { label: letter.subject }]}>
@@ -76,6 +109,9 @@ export default function LetterDetail() {
                   <span className="text-xs text-muted-foreground">
                     Submitted {new Date(letter.createdAt).toLocaleDateString()}
                   </span>
+                  {isInProgress && (
+                    <span className="text-xs text-blue-500 animate-pulse">Auto-refreshing...</span>
+                  )}
                 </div>
               </div>
             </div>
@@ -90,41 +126,8 @@ export default function LetterDetail() {
 
         {/* Status Timeline */}
         <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-sm flex items-center gap-2">
-              <Clock className="w-4 h-4 text-primary" />
-              Status Timeline
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="relative">
-              <div className="absolute left-3.5 top-2 bottom-2 w-0.5 bg-border" />
-              <div className="space-y-4">
-                {[
-                  { status: "submitted", label: "Submitted", done: true },
-                  { status: "researching", label: "Legal Research", done: ["researching", "drafting", "pending_review", "under_review", "approved", "rejected", "needs_changes"].includes(letter.status) },
-                  { status: "drafting", label: "AI Drafting", done: ["drafting", "pending_review", "under_review", "approved", "rejected", "needs_changes"].includes(letter.status) },
-                  { status: "pending_review", label: "Attorney Review Queue", done: ["pending_review", "under_review", "approved", "rejected", "needs_changes"].includes(letter.status) },
-                  { status: "under_review", label: "Under Attorney Review", done: ["under_review", "approved", "rejected", "needs_changes"].includes(letter.status) },
-                  { status: letter.status === "rejected" ? "rejected" : "approved", label: letter.status === "rejected" ? "Rejected" : "Approved & Ready", done: ["approved", "rejected"].includes(letter.status) },
-                ].map((step, i) => (
-                  <div key={i} className="flex items-center gap-4 relative pl-8">
-                    <div className={`absolute left-0 w-7 h-7 rounded-full flex items-center justify-center border-2 ${
-                      step.done
-                        ? "bg-primary border-primary"
-                        : letter.status === step.status
-                        ? "bg-amber-400 border-amber-400"
-                        : "bg-background border-border"
-                    }`}>
-                      {step.done && <CheckCircle className="w-3.5 h-3.5 text-white" />}
-                    </div>
-                    <span className={`text-sm ${step.done ? "text-foreground font-medium" : "text-muted-foreground"}`}>
-                      {step.label}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
+          <CardContent className="p-5">
+            <StatusTimeline currentStatus={letter.status} />
           </CardContent>
         </Card>
 
@@ -146,6 +149,44 @@ export default function LetterDetail() {
                   </p>
                 </div>
               ))}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Needs Changes — Subscriber Update Form */}
+        {letter.status === "needs_changes" && (
+          <Card className="border-amber-200 bg-amber-50/30">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-sm flex items-center gap-2 text-amber-700">
+                <AlertCircle className="w-4 h-4" />
+                Changes Requested — Your Response
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <p className="text-sm text-amber-700">
+                The reviewing attorney has requested changes. Please review the attorney notes above and provide additional context or corrections below. The AI pipeline will re-process your letter with this new information.
+              </p>
+              <Textarea
+                value={updateText}
+                onChange={(e) => setUpdateText(e.target.value)}
+                placeholder="Provide additional context, corrections, or clarifications here..."
+                rows={4}
+                className="bg-white border-amber-200"
+              />
+              <Button
+                onClick={handleSubmitUpdate}
+                disabled={updateMutation.isPending || updateText.trim().length < 10}
+                className="bg-amber-600 hover:bg-amber-700 text-white"
+              >
+                {updateMutation.isPending ? (
+                  "Submitting..."
+                ) : (
+                  <>
+                    <Send className="w-4 h-4 mr-2" />
+                    Submit Response & Re-Process
+                  </>
+                )}
+              </Button>
             </CardContent>
           </Card>
         )}
@@ -175,17 +216,16 @@ export default function LetterDetail() {
           </Card>
         )}
 
-        {/* Needs Changes Notice */}
-        {letter.status === "needs_changes" && (
-          <Card className="border-amber-200 bg-amber-50/30">
+        {/* Rejected Notice */}
+        {letter.status === "rejected" && (
+          <Card className="border-red-200 bg-red-50/30">
             <CardContent className="p-5">
               <div className="flex items-start gap-3">
-                <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-amber-800">Changes Requested</p>
-                  <p className="text-sm text-amber-700 mt-1">
-                    The reviewing attorney has requested changes. Please review the attorney notes above. 
-                    The AI pipeline will be re-triggered to incorporate the feedback.
+                  <p className="text-sm font-semibold text-red-800">Letter Request Rejected</p>
+                  <p className="text-sm text-red-700 mt-1">
+                    Unfortunately, the reviewing attorney has rejected this letter request. Please review the attorney notes above for details.
                   </p>
                 </div>
               </div>

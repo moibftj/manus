@@ -15,6 +15,13 @@
       "when": 1771771690548,
       "tag": "0001_spooky_alex_wilder",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1771800937837,
+      "tag": "0002_outstanding_madelyne_pryor",
+      "breakpoints": true
     }
   ]
 }

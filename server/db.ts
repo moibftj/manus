@@ -375,7 +375,7 @@ export async function createResearchRun(data: {
   const result = await db.insert(researchRuns).values({
     letterRequestId: data.letterRequestId,
     workflowJobId: data.workflowJobId,
-    provider: data.provider ?? "openai",
+    provider: data.provider ?? "perplexity",
     status: "queued",
     queryPlanJson: data.queryPlanJson as any,
   });

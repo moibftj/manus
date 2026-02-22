@@ -83,3 +83,42 @@
 - [ ] Employee coupon system (20% discount on per-letter)
 - [ ] Pricing page UI
 - [ ] Credit/letter allowance enforcement before letter submission
+
+## Phase 10: Spec Compliance Patches (from pasted_content_4)
+- [ ] Add buildNormalizedPromptInput helper (trim strings, safe defaults, filter empty rows)
+- [ ] Strengthen validateResearchPacket: require sourceUrl+sourceTitle per rule, prefer >= 3 rules
+- [ ] Add subscriber updateForChanges mutation (re-submit after needs_changes)
+- [ ] Add admin forceStatusTransition mutation (audited)
+- [ ] Add frontend polling/revalidation for researching/drafting/pending_review statuses
+- [ ] Add status timeline component in subscriber LetterDetail
+- [ ] Add subscriber update form when status is needs_changes
+- [ ] Verify success path E2E (submit → research → draft → assembly → pending_review → claim → approve → subscriber sees final)
+- [ ] Verify failure path (invalid research stops pipeline, invalid draft stops pipeline)
+- [ ] Verify security (subscriber cannot access ai_draft/research/internal notes)
+
+## Phase 12: Stripe Payment Integration
+- [x] Fix TypeScript error in AdminLetterDetail page
+- [x] Add Stripe scaffold via webdev_add_feature
+- [x] Configure STRIPE_SECRET_KEY and STRIPE_PUBLISHABLE_KEY
+- [x] Create subscriptions and payments tables in database
+- [x] Create Stripe products/prices: per-letter ($29), monthly ($79/mo), annual ($599/yr)
+- [x] Build checkout session endpoint (tRPC)
+- [x] Build Stripe webhook handler (subscription events, payment events)
+- [x] Build subscription status checker middleware
+- [x] Build billing portal redirect endpoint
+- [x] Build Pricing page with 3 plans
+- [x] Build Subscription status component in subscriber dashboard
+- [x] Gate letter submission behind active subscription or available credits
+- [x] Show upgrade prompt when subscriber has no active plan
+- [x] Admin: view subscriber subscription status
+- [x] Run tests and save checkpoint (29/29 passing, 0 TS errors)
+
+## Phase 11: n8n Workflow Integration & Frontend Polish
+- [ ] Get n8n workflow webhook URL for the best legal letter workflow
+- [ ] Activate the n8n workflow so webhook is live
+- [ ] Update pipeline.ts to call n8n webhook as primary, with in-app AI fallback
+- [ ] Add N8N_WEBHOOK_URL as environment variable
+- [ ] Build admin letter detail page with force status transition dialog
+- [ ] Add polling/revalidation to employee ReviewDetail for in-progress statuses
+- [ ] Verify TypeScript compiles cleanly
+- [ ] Run all tests

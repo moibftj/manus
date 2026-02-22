@@ -42,6 +42,12 @@ import {
 } from "./email";
 import { runFullPipeline, retryPipelineFromStage } from "./pipeline";
 import { storagePut } from "./storage";
+import {
+  createCheckoutSession,
+  createBillingPortalSession,
+  getUserSubscription,
+  checkLetterSubmissionAllowed,
+} from "./stripe";
 
 // ─── Role Guards ──────────────────────────────────────────────────────────────
 
@@ -174,6 +180,49 @@ export const appRouter = router({
         const versions = await getLetterVersionsByRequestId(input.id, false);
         const attachmentList = await getAttachmentsByLetterId(input.id);
         return { letter, actions, versions, attachments: attachmentList };
+      }),
+
+    updateForChanges: subscriberProcedure
+      .input(z.object({
+        letterId: z.number(),
+        additionalContext: z.string().min(10),
+        updatedIntakeJson: z.any().optional(),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const letter = await getLetterRequestById(input.letterId);
+        if (!letter || letter.userId !== ctx.user.id)
+          throw new TRPCError({ code: "NOT_FOUND" });
+        if (letter.status !== "needs_changes")
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Letter must be in needs_changes status" });
+        // Log the subscriber's response
+        await logReviewAction({
+          letterRequestId: input.letterId,
+          reviewerId: ctx.user.id,
+          actorType: "subscriber",
+          action: "subscriber_updated",
+          noteText: input.additionalContext,
+          noteVisibility: "user_visible",
+          fromStatus: "needs_changes",
+          toStatus: "needs_changes",
+        });
+        // If updated intake provided, update the letter request
+        if (input.updatedIntakeJson) {
+          const db = await (await import("./db")).getDb();
+          if (db) {
+            const { letterRequests } = await import("../drizzle/schema");
+            const { eq } = await import("drizzle-orm");
+            await db.update(letterRequests).set({
+              intakeJson: input.updatedIntakeJson,
+              updatedAt: new Date(),
+            } as any).where(eq(letterRequests.id, input.letterId));
+          }
+        }
+        // Re-trigger pipeline from drafting stage
+        if (letter.intakeJson) {
+          const intake = input.updatedIntakeJson ?? letter.intakeJson;
+          retryPipelineFromStage(input.letterId, intake as any, "drafting").catch(console.error);
+        }
+        return { success: true };
       }),
 
     uploadAttachment: subscriberProcedure
@@ -395,6 +444,49 @@ export const appRouter = router({
 
     employees: adminProcedure.query(async () => getEmployees()),
 
+    getLetterDetail: adminProcedure
+      .input(z.object({ letterId: z.number() }))
+      .query(async ({ input }) => {
+        const letter = await getLetterRequestById(input.letterId);
+        if (!letter) throw new TRPCError({ code: "NOT_FOUND" });
+        const [versions, actions, jobs] = await Promise.all([
+          getLetterVersionsByRequestId(input.letterId, true), // include internal
+          getReviewActions(input.letterId, true), // include internal
+          getWorkflowJobsByLetterId(input.letterId),
+        ]);
+        const aiDraftVersion = versions.find(v => v.versionType === "ai_draft");
+        return {
+          ...letter,
+          aiDraftContent: aiDraftVersion?.content ?? null,
+          letterVersions: versions,
+          reviewActions: actions,
+          workflowJobs: jobs,
+        };
+      }),
+
+    forceStatusTransition: adminProcedure
+      .input(z.object({
+        letterId: z.number(),
+        newStatus: z.enum(["submitted", "researching", "drafting", "pending_review", "under_review", "needs_changes", "approved", "rejected"]),
+        reason: z.string().min(5),
+      }))
+      .mutation(async ({ ctx, input }) => {
+        const letter = await getLetterRequestById(input.letterId);
+        if (!letter) throw new TRPCError({ code: "NOT_FOUND" });
+        await updateLetterStatus(input.letterId, input.newStatus);
+        await logReviewAction({
+          letterRequestId: input.letterId,
+          reviewerId: ctx.user.id,
+          actorType: "admin",
+          action: "admin_force_status_transition",
+          noteText: `Admin forced status from ${letter.status} to ${input.newStatus}. Reason: ${input.reason}`,
+          noteVisibility: "internal",
+          fromStatus: letter.status,
+          toStatus: input.newStatus,
+        });
+        return { success: true };
+      }),
+
     assignLetter: adminProcedure
       .input(z.object({ letterId: z.number(), employeeId: z.number() }))
       .mutation(async ({ ctx, input }) => {
@@ -438,6 +530,34 @@ export const appRouter = router({
         return version;
       }),
   }),
+  // ─── Stripe / Billing ────────────────────────────────────────────────────
+  billing: router({
+    getSubscription: protectedProcedure.query(async ({ ctx }) => {
+      return getUserSubscription(ctx.user.id);
+    }),
+    checkCanSubmit: protectedProcedure.query(async ({ ctx }) => {
+      return checkLetterSubmissionAllowed(ctx.user.id);
+    }),
+    createCheckout: protectedProcedure
+      .input(z.object({ planId: z.string() }))
+      .mutation(async ({ ctx, input }) => {
+        const result = await createCheckoutSession({
+          userId: ctx.user.id,
+          email: ctx.user.email ?? "",
+          name: ctx.user.name,
+          planId: input.planId,
+          origin: ctx.req.headers.origin as string ?? "https://localhost:3000",
+        });
+        return result;
+      }),
+    createBillingPortal: protectedProcedure.mutation(async ({ ctx }) => {
+      const url = await createBillingPortalSession({
+        userId: ctx.user.id,
+        email: ctx.user.email ?? "",
+        origin: ctx.req.headers.origin as string ?? "https://localhost:3000",
+      });
+      return { url };
+    }),
+  }),
 });
-
 export type AppRouter = typeof appRouter;

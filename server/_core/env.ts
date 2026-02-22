@@ -7,4 +7,17 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
+  // AI Pipeline
+  openAiApiKey: process.env.OPENAI_API_KEY ?? "",
+  perplexityApiKey: process.env.PERPLEXITY_API_KEY ?? "",
+  // n8n Integration
+  n8nWebhookUrl: process.env.N8N_WEBHOOK_URL ?? "",
+  n8nCallbackSecret: process.env.N8N_CALLBACK_SECRET ?? "",
+  // Email
+  resendApiKey: process.env.RESEND_API_KEY ?? "",
+  resendFromEmail: process.env.RESEND_FROM_EMAIL ?? "noreply@talktomylawyer.com",
+  // Stripe
+  stripeSecretKey: process.env.STRIPE_SECRET_KEY ?? "",
+  stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET ?? "",
+  stripePublishableKey: process.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "",
 };

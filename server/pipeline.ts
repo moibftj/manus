@@ -24,6 +24,7 @@ import {
   updateWorkflowJob,
 } from "./db";
 import type { IntakeJson, ResearchPacket, DraftOutput } from "../shared/types";
+import { buildNormalizedPromptInput, type NormalizedPromptInput } from "./intake-normalizer";
 
 // ═══════════════════════════════════════════════════════
 // MODEL PROVIDERS
@@ -65,11 +66,21 @@ export function validateResearchPacket(data: unknown): { valid: boolean; errors:
   if (!Array.isArray(p.applicableRules))
     errors.push("applicableRules must be an array");
   else {
+    if (p.applicableRules.length === 0)
+      errors.push("applicableRules must be a non-empty array");
+    else if (p.applicableRules.length < 3)
+      errors.push(`applicableRules should have >= 3 rules for thorough research (found ${p.applicableRules.length})`);
     (p.applicableRules as unknown[]).forEach((rule, i) => {
       if (!rule || typeof rule !== "object") { errors.push(`applicableRules[${i}] is not an object`); return; }
       const r = rule as Record<string, unknown>;
       if (!r.ruleTitle) errors.push(`applicableRules[${i}].ruleTitle is required`);
       if (!r.summary) errors.push(`applicableRules[${i}].summary is required`);
+      if (!r.sourceUrl || typeof r.sourceUrl !== "string" || r.sourceUrl.length === 0)
+        errors.push(`applicableRules[${i}].sourceUrl is required`);
+      if (!r.sourceTitle || typeof r.sourceTitle !== "string" || r.sourceTitle.length === 0)
+        errors.push(`applicableRules[${i}].sourceTitle is required`);
+      if (!r.jurisdiction || typeof r.jurisdiction !== "string")
+        errors.push(`applicableRules[${i}].jurisdiction is required`);
       if (!["high", "medium", "low"].includes(r.confidence as string))
         errors.push(`applicableRules[${i}].confidence must be high/medium/low`);
     });
@@ -375,12 +386,102 @@ export async function runAssemblyStage(
 // FULL PIPELINE ORCHESTRATOR
 // ═══════════════════════════════════════════════════════
 
-export async function runFullPipeline(letterId: number, intake: IntakeJson): Promise<void> {
+export async function runFullPipeline(letterId: number, intake: IntakeJson, dbFields?: { subject: string; issueSummary?: string | null; jurisdictionCountry?: string | null; jurisdictionState?: string | null; jurisdictionCity?: string | null; letterType: string }): Promise<void> {
+  // Normalize intake using canonical helper
+  const normalizedInput = buildNormalizedPromptInput(
+    dbFields ?? {
+      subject: intake.matter?.subject ?? "Legal Matter",
+      issueSummary: intake.matter?.description,
+      jurisdictionCountry: intake.jurisdiction?.country,
+      jurisdictionState: intake.jurisdiction?.state,
+      jurisdictionCity: intake.jurisdiction?.city,
+      letterType: intake.letterType,
+    },
+    intake
+  );
+  console.log(`[Pipeline] Normalized intake for letter #${letterId}: letterType=${normalizedInput.letterType}, jurisdiction=${normalizedInput.jurisdiction.state}`);
+
+  // ── Try n8n workflow first (primary path) ──────────────────────────────────
+  const n8nWebhookUrl = process.env.N8N_WEBHOOK_URL ?? "";
+  const n8nCallbackSecret = process.env.N8N_CALLBACK_SECRET ?? "";
+  const appBaseUrl = process.env.BUILT_IN_FORGE_API_URL
+    ? (process.env.BUILT_IN_FORGE_API_URL.includes('manus') ? process.env.VITE_APP_ID ? `https://${process.env.VITE_APP_ID}.manus.computer` : "" : "")
+    : "";
+
+  if (n8nWebhookUrl && n8nWebhookUrl.startsWith("https://")) {
+    const pipelineJob = await createWorkflowJob({
+      letterRequestId: letterId,
+      jobType: "generation_pipeline",
+      provider: "n8n",
+      requestPayloadJson: { letterId, stages: ["n8n-perplexity-research", "n8n-openai-draft"], normalizedInput },
+    });
+    const pipelineJobId = (pipelineJob as any)?.insertId ?? 0;
+    await updateWorkflowJob(pipelineJobId, { status: "running", startedAt: new Date() });
+    await updateLetterStatus(letterId, "researching");
+
+    try {
+      console.log(`[Pipeline] Triggering n8n workflow for letter #${letterId}: ${n8nWebhookUrl}`);
+      const callbackUrl = `${process.env.BUILT_IN_FORGE_API_URL ? '' : ''}/api/pipeline/n8n-callback`;
+      // We fire-and-forget the n8n webhook — the callback endpoint will handle the result
+      const payload = {
+        letterId,
+        letterType: intake.letterType,
+        userId: intake.sender?.name ?? "unknown",
+        callbackUrl: callbackUrl || `https://3000-${process.env.VITE_APP_ID ?? 'app'}.manus.computer/api/pipeline/n8n-callback`,
+        callbackSecret: n8nCallbackSecret,
+        intakeData: {
+          sender: intake.sender,
+          recipient: intake.recipient,
+          jurisdictionState: intake.jurisdiction?.state ?? "",
+          jurisdictionCountry: intake.jurisdiction?.country ?? "US",
+          matter: intake.matter,
+          desiredOutcome: intake.desiredOutcome,
+          letterType: intake.letterType,
+          tonePreference: intake.tonePreference,
+          financials: intake.financials,
+          additionalContext: intake.additionalContext,
+        },
+      };
+
+      const response = await fetch(n8nWebhookUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+        signal: AbortSignal.timeout(10000), // 10s to get acknowledgment
+      });
+
+      if (response.ok) {
+        const ack = await response.json().catch(() => ({}));
+        console.log(`[Pipeline] n8n acknowledged letter #${letterId}:`, ack);
+        await updateWorkflowJob(pipelineJobId, {
+          status: "running",
+          responsePayloadJson: { ack, mode: "n8n-async" },
+        });
+        // n8n will call back when done — we return here and let the callback handle the rest
+        return;
+      } else {
+        const errText = await response.text().catch(() => "unknown");
+        console.warn(`[Pipeline] n8n returned ${response.status} for letter #${letterId}: ${errText}. Falling back to in-app pipeline.`);
+        await updateWorkflowJob(pipelineJobId, {
+          status: "failed",
+          errorMessage: `n8n returned ${response.status}: ${errText}`,
+          completedAt: new Date(),
+        });
+      }
+    } catch (n8nErr) {
+      const n8nMsg = n8nErr instanceof Error ? n8nErr.message : String(n8nErr);
+      console.warn(`[Pipeline] n8n call failed for letter #${letterId}: ${n8nMsg}. Falling back to in-app pipeline.`);
+    }
+  } else {
+    console.log(`[Pipeline] n8n webhook not configured — using in-app 3-stage pipeline for letter #${letterId}`);
+  }
+
+  // ── Fallback: In-app 3-stage pipeline ─────────────────────────────────────
   const pipelineJob = await createWorkflowJob({
     letterRequestId: letterId,
     jobType: "generation_pipeline",
     provider: "multi-provider",
-    requestPayloadJson: { letterId, stages: ["perplexity-research", "openai-draft", "claude-assembly"] },
+    requestPayloadJson: { letterId, stages: ["perplexity-research", "openai-draft", "claude-assembly"], normalizedInput },
   });
   const pipelineJobId = (pipelineJob as any)?.insertId ?? 0;
   await updateWorkflowJob(pipelineJobId, { status: "running", startedAt: new Date() });
@@ -396,7 +497,7 @@ export async function runFullPipeline(letterId: number, intake: IntakeJson): Pro
     await runAssemblyStage(letterId, intake, research, draft);
 
     await updateWorkflowJob(pipelineJobId, { status: "completed", completedAt: new Date() });
-    console.log(`[Pipeline] Full 3-stage pipeline completed for letter #${letterId}`);
+    console.log(`[Pipeline] Full 3-stage in-app pipeline completed for letter #${letterId}`);
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
     console.error(`[Pipeline] Full pipeline failed for letter #${letterId}:`, msg);

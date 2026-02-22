@@ -11,6 +11,8 @@ import { useLocation } from "wouter";
 import { toast } from "sonner";
 import { ChevronRight, ChevronLeft, CheckCircle, FileText, MapPin, Users, AlignLeft, Target } from "lucide-react";
 import { LETTER_TYPE_CONFIG, US_STATES } from "../../../../shared/types";
+import { AlertCircle, Scale } from "lucide-react";
+import { Link } from "wouter";
 
 const STEPS = [
   { id: 1, label: "Letter Type", icon: <FileText className="w-4 h-4" /> },
@@ -67,6 +69,8 @@ export default function SubmitLetter() {
   const [form, setForm] = useState<FormData>(INITIAL);
   const [, navigate] = useLocation();
 
+  const { data: canSubmitData, isLoading: checkingSubscription } = trpc.billing.checkCanSubmit.useQuery();
+
   const submit = trpc.letters.submit.useMutation({
     onSuccess: (data) => {
       toast.success("Letter submitted successfully! AI pipeline has started.");
@@ -109,6 +113,31 @@ export default function SubmitLetter() {
       intakeJson,
     });
   };
+
+  // Show subscription gate if user cannot submit
+  if (!checkingSubscription && canSubmitData && !canSubmitData.allowed) {
+    return (
+      <AppLayout breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Submit Letter" }]}>
+        <div className="max-w-2xl mx-auto">
+          <div className="rounded-xl border-2 border-dashed border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30 p-10 text-center space-y-4">
+            <Scale className="w-12 h-12 text-amber-500 mx-auto" />
+            <h2 className="text-xl font-bold text-foreground">Subscription Required</h2>
+            <p className="text-muted-foreground max-w-md mx-auto">{canSubmitData.reason}</p>
+            <div className="flex gap-3 justify-center pt-2">
+              <Link href="/pricing">
+                <Button className="bg-[#3b82f6] hover:bg-[#2563eb] text-white">
+                  <Scale className="w-4 h-4 mr-2" /> View Plans
+                </Button>
+              </Link>
+              <Link href="/subscriber/billing">
+                <Button variant="outline">Manage Billing</Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </AppLayout>
+    );
+  }
 
   return (
     <AppLayout breadcrumb={[{ label: "Dashboard", href: "/dashboard" }, { label: "Submit Letter" }]}>

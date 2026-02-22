@@ -18,6 +18,9 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminJobs from "./pages/admin/Jobs";
 import AdminAllLetters from "./pages/admin/AllLetters";
+import AdminLetterDetail from "./pages/admin/LetterDetail";
+import Pricing from "./pages/Pricing";
+import Billing from "./pages/subscriber/Billing";
 
 function Router() {
   return (
@@ -34,7 +37,9 @@ function Router() {
       <Route path="/admin/users" component={AdminUsers} />
       <Route path="/admin/jobs" component={AdminJobs} />
       <Route path="/admin/letters" component={AdminAllLetters} />
-      <Route path="/admin/letters/:id" component={ReviewDetail} />
+      <Route path="/admin/letters/:id" component={AdminLetterDetail} />
+      <Route path="/pricing" component={Pricing} />
+      <Route path="/subscriber/billing" component={Billing} />
       <Route path="/404" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
