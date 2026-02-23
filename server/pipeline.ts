@@ -444,9 +444,17 @@ export async function runFullPipeline(letterId: number, intake: IntakeJson, dbFi
         },
       };
 
-      const response = await fetch(n8nWebhookUrl, {
+      // Correct stale webhook URL path if needed
+      const resolvedWebhookUrl = n8nWebhookUrl.includes("ttml-legal-pipeline")
+        ? n8nWebhookUrl.replace("ttml-legal-pipeline", "legal-letter-submission")
+        : n8nWebhookUrl;
+      const response = await fetch(resolvedWebhookUrl, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          // n8n webhook uses headerAuth — the credential's header name is X-Auth-Token
+          "X-Auth-Token": n8nCallbackSecret,
+        },
         body: JSON.stringify(payload),
         signal: AbortSignal.timeout(10000), // 10s to get acknowledgment
       });
