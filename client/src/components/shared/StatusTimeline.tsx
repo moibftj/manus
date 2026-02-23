@@ -1,9 +1,10 @@
-import { CheckCircle2, Circle, Clock, AlertTriangle, XCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, Circle, Clock, AlertTriangle, XCircle, Loader2, Lock } from "lucide-react";
 
 const STATUS_STEPS = [
   { key: "submitted", label: "Submitted", icon: Circle },
   { key: "researching", label: "Researching", icon: Loader2 },
   { key: "drafting", label: "Drafting", icon: Loader2 },
+  { key: "generated_locked", label: "Ready to Unlock", icon: Lock },
   { key: "pending_review", label: "Pending Review", icon: Clock },
   { key: "under_review", label: "Under Review", icon: Clock },
 ] as const;
@@ -31,6 +32,7 @@ export default function StatusTimeline({ currentStatus, className }: StatusTimel
           const isComplete = currentIdx > idx || isTerminal;
           const isCurrent = currentIdx === idx && !isTerminal;
           const isInProgress = isCurrent && (step.key === "researching" || step.key === "drafting");
+          const isPaywall = isCurrent && step.key === "generated_locked";
           const Icon = step.icon;
 
           return (
@@ -50,6 +52,8 @@ export default function StatusTimeline({ currentStatus, className }: StatusTimel
                 ) : isCurrent ? (
                   isInProgress ? (
                     <Loader2 className="w-6 h-6 text-blue-500 animate-spin" />
+                  ) : isPaywall ? (
+                    <Lock className="w-6 h-6 text-amber-500" />
                   ) : (
                     <Clock className="w-6 h-6 text-blue-500" />
                   )
@@ -62,6 +66,8 @@ export default function StatusTimeline({ currentStatus, className }: StatusTimel
                 className={`text-sm pb-4 ${
                   isComplete
                     ? "text-emerald-600 font-medium"
+                    : isPaywall
+                    ? "text-amber-600 font-semibold"
                     : isCurrent
                     ? "text-blue-600 font-semibold"
                     : "text-muted-foreground/50"
@@ -69,6 +75,7 @@ export default function StatusTimeline({ currentStatus, className }: StatusTimel
               >
                 {step.label}
                 {isInProgress && <span className="ml-2 text-xs text-blue-400">(in progress...)</span>}
+                {isPaywall && <span className="ml-2 text-xs text-amber-500">(payment required)</span>}
               </span>
             </div>
           );

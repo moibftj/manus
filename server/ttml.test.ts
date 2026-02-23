@@ -14,8 +14,16 @@ describe("Status Machine: ALLOWED_TRANSITIONS", () => {
     expect(isValidTransition("researching", "drafting")).toBe(true);
   });
 
-  it("should allow drafting → pending_review", () => {
-    expect(isValidTransition("drafting", "pending_review")).toBe(true);
+  it("should allow drafting → generated_locked (paywall: AI complete, awaiting payment)", () => {
+    expect(isValidTransition("drafting", "generated_locked")).toBe(true);
+  });
+
+  it("should allow generated_locked → pending_review (after subscriber payment)", () => {
+    expect(isValidTransition("generated_locked", "pending_review")).toBe(true);
+  });
+
+  it("should NOT allow drafting → pending_review directly (must go through paywall)", () => {
+    expect(isValidTransition("drafting", "pending_review")).toBe(false);
   });
 
   it("should allow pending_review → under_review", () => {

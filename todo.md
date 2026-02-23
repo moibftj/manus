@@ -122,3 +122,30 @@
 - [ ] Add polling/revalidation to employee ReviewDetail for in-progress statuses
 - [ ] Verify TypeScript compiles cleanly
 - [ ] Run all tests
+
+## Phase 13: Dashboard Enhancement — Letters History & Payment Receipts
+- [ ] Audit current subscriber dashboard, MyLetters, and Billing pages
+- [ ] Add backend: letters list with search/filter/sort/pagination (tRPC)
+- [ ] Add backend: payment receipts list from Stripe invoices (tRPC)
+- [ ] Rebuild MyLetters page as full Letters History with search, filter by status/type/date, sort, pagination
+- [ ] Build Payment Receipts page with Stripe invoice history, amounts, dates, downloadable receipt links
+- [ ] Enhance subscriber Dashboard with summary stats (total letters, active subscription, credits used, pending reviews)
+- [ ] Add recent activity feed on dashboard (last 5 letters with status)
+- [ ] Add quick action cards on dashboard (Submit Letter, View Letters, Billing)
+- [ ] Run tests, verify, save checkpoint
+
+## Phase 14: Paywall Flow Revision + Dashboard Enhancements
+- [x] Add generated_locked status to schema enum and status machine
+- [x] Update DB migration to include generated_locked status
+- [x] Add payToUnlock mutation: create per-letter checkout, on success advance to pending_review
+- [x] Build LetterPaywall component: blurred AI draft preview + Pay Now button
+- [x] Update LetterDetail to show LetterPaywall when status = generated_locked
+- [x] Update pipeline to set status = generated_locked after AI assembly (instead of pending_review)
+- [x] Update Stripe webhook to handle letter unlock (generated_locked → pending_review)
+- [x] Update MyLetters list: generated_locked highlighted amber with "Unlock for $29" badge
+- [x] Update StatusTimeline: generated_locked step with amber lock icon
+- [x] Update StatusBadge: generated_locked shows "Ready to Unlock" in yellow
+- [x] Tests: 31/31 passing, 0 TypeScript errors
+- [ ] Build Payment Receipts page with invoice history, amounts, dates, receipt links (future)
+- [ ] Enhance subscriber Dashboard: subscription status widget, activity feed, quick action cards (future)
+- [ ] Add date range filter to Letters History (future)

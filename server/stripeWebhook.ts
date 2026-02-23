@@ -7,7 +7,8 @@ import type { Request, Response } from "express";
 import Stripe from "stripe";
 import { ENV } from "./_core/env";
 import { getStripe, activateSubscription } from "./stripe";
-import { getDb } from "./db";
+import { getDb, updateLetterStatus, logReviewAction, getLetterRequestById, getUserById, createNotification } from "./db";
+import { sendLetterApprovedEmail } from "./email";
 import { users } from "../drizzle/schema";
 import { eq } from "drizzle-orm";
 
@@ -87,6 +88,55 @@ export async function stripeWebhookHandler(req: Request, res: Response): Promise
           });
 
           console.log(`[StripeWebhook] Per-letter payment activated for user ${userId}`);
+
+          // ─── Letter unlock: transition generated_locked → pending_review ───
+          const letterIdStr = session.metadata?.letter_id;
+          const unlockType = session.metadata?.unlock_type;
+          if (letterIdStr && unlockType === "letter_unlock") {
+            const letterId = parseInt(letterIdStr, 10);
+            if (!isNaN(letterId)) {
+              try {
+                const letter = await getLetterRequestById(letterId);
+                if (letter && letter.status === "generated_locked") {
+                  await updateLetterStatus(letterId, "pending_review");
+                  await logReviewAction({
+                    letterRequestId: letterId,
+                    actorType: "system",
+                    action: "payment_received",
+                    noteText: `Payment received. Letter unlocked and queued for attorney review. Stripe session: ${session.id}`,
+                    noteVisibility: "user_visible",
+                    fromStatus: "generated_locked",
+                    toStatus: "pending_review",
+                  });
+                  // Notify subscriber
+                  await createNotification({
+                    userId,
+                    type: "letter_unlocked",
+                    title: "Payment confirmed — letter sent for review!",
+                    body: `Your letter "${letter.subject}" is now in the attorney review queue.`,
+                    link: `/letters/${letterId}`,
+                  });
+                  // Notify attorneys/employees
+                  const subscriber = await getUserById(userId);
+                  if (subscriber?.email) {
+                    const origin = `${session.success_url?.split('/letters')[0] ?? 'https://app.talktomylawyer.com'}`;
+                    await sendLetterApprovedEmail({
+                      to: subscriber.email,
+                      name: subscriber.name ?? "Subscriber",
+                      subject: letter.subject,
+                      letterId,
+                      appUrl: origin,
+                    }).catch(console.error);
+                  }
+                  console.log(`[StripeWebhook] Letter #${letterId} unlocked → pending_review`);
+                } else {
+                  console.warn(`[StripeWebhook] Letter #${letterId} not in generated_locked (status: ${letter?.status})`);
+                }
+              } catch (unlockErr) {
+                console.error(`[StripeWebhook] Failed to unlock letter #${letterId}:`, unlockErr);
+              }
+            }
+          }
         }
         // For subscription mode, the subscription.* events handle activation
         break;

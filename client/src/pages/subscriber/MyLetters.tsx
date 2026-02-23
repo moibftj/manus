@@ -4,7 +4,7 @@ import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileText, PlusCircle, Search, ArrowRight } from "lucide-react";
+import { FileText, PlusCircle, Search, ArrowRight, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 import { LETTER_TYPE_CONFIG } from "../../../../shared/types";
@@ -56,6 +56,7 @@ export default function MyLetters() {
               <SelectItem value="pending_review">Pending Review</SelectItem>
               <SelectItem value="under_review">Under Review</SelectItem>
               <SelectItem value="needs_changes">Needs Changes</SelectItem>
+              <SelectItem value="generated_locked">Ready to Unlock</SelectItem>
               <SelectItem value="approved">Approved</SelectItem>
               <SelectItem value="rejected">Rejected</SelectItem>
             </SelectContent>
@@ -90,7 +91,11 @@ export default function MyLetters() {
           <div className="space-y-2">
             {filtered.map((letter) => (
               <Link key={letter.id} href={`/letters/${letter.id}`}>
-                <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer">
+                    <div className={`bg-card border rounded-xl p-4 hover:shadow-sm transition-all cursor-pointer ${
+                      letter.status === "generated_locked"
+                        ? "border-amber-300 hover:border-amber-400 bg-amber-50/30"
+                        : "border-border hover:border-primary/40"
+                    }`}>
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
                       <FileText className="w-5 h-5 text-primary" />
@@ -106,6 +111,12 @@ export default function MyLetters() {
                       </p>
                       <div className="flex items-center gap-3 mt-2">
                         <StatusBadge status={letter.status} size="sm" />
+                        {letter.status === "generated_locked" && (
+                          <span className="text-xs text-amber-600 font-semibold flex items-center gap-1">
+                            <Lock className="w-3 h-3" />
+                            Unlock for $29
+                          </span>
+                        )}
                         <span className="text-xs text-muted-foreground">
                           {new Date(letter.createdAt).toLocaleDateString()}
                         </span>

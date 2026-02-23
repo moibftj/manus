@@ -10,7 +10,8 @@ export * from "./_core/errors";
 export const ALLOWED_TRANSITIONS: Record<string, string[]> = {
   submitted: ["researching"],
   researching: ["drafting"],
-  drafting: ["pending_review"],
+  drafting: ["generated_locked"], // AI pipeline complete, awaiting subscriber payment
+  generated_locked: ["pending_review"], // subscriber pays → sent to attorney review
   pending_review: ["under_review"],
   under_review: ["approved", "rejected", "needs_changes"],
   needs_changes: ["researching", "drafting"],
@@ -25,6 +26,7 @@ export const STATUS_CONFIG: Record<string, { label: string; color: string; bgCol
   submitted: { label: "Submitted", color: "text-blue-600", bgColor: "bg-blue-100" },
   researching: { label: "Researching", color: "text-indigo-600", bgColor: "bg-indigo-100" },
   drafting: { label: "AI Drafting", color: "text-purple-600", bgColor: "bg-purple-100" },
+  generated_locked: { label: "Ready to Unlock", color: "text-yellow-700", bgColor: "bg-yellow-100" },
   pending_review: { label: "Pending Review", color: "text-amber-600", bgColor: "bg-amber-100" },
   under_review: { label: "Under Review", color: "text-orange-600", bgColor: "bg-orange-100" },
   needs_changes: { label: "Needs Changes", color: "text-red-600", bgColor: "bg-red-100" },

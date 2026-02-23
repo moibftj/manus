@@ -1,22 +1,38 @@
 import AppLayout from "@/components/shared/AppLayout";
 import StatusBadge from "@/components/shared/StatusBadge";
 import StatusTimeline from "@/components/shared/StatusTimeline";
+import { LetterPaywall } from "@/components/LetterPaywall";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { FileText, Download, MessageSquare, ArrowLeft, CheckCircle, AlertCircle, Send } from "lucide-react";
-import { Link, useParams } from "wouter";
+import { FileText, Download, MessageSquare, ArrowLeft, CheckCircle, AlertCircle, Send, Clock } from "lucide-react";
+import { Link, useParams, useSearch } from "wouter";
 import { LETTER_TYPE_CONFIG } from "../../../../shared/types";
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import { toast } from "sonner";
 
-const IN_PROGRESS_STATUSES = ["submitted", "researching", "drafting", "pending_review"];
+// Statuses that require active polling (AI pipeline in progress or awaiting action)
+const POLLING_STATUSES = ["submitted", "researching", "drafting", "pending_review", "under_review"];
 
 export default function LetterDetail() {
   const params = useParams<{ id: string }>();
+  const search = useSearch();
   const letterId = parseInt(params.id ?? "0");
   const [updateText, setUpdateText] = useState("");
+
+  // Show success toast after Stripe redirect
+  useEffect(() => {
+    const searchParams = new URLSearchParams(search);
+    if (searchParams.get("unlocked") === "true") {
+      toast.success("Payment confirmed! Your letter has been sent for attorney review.", {
+        description: "You'll receive an email when it's approved.",
+        duration: 6000,
+      });
+    } else if (searchParams.get("canceled") === "true") {
+      toast.info("Payment canceled. Your letter is still ready to unlock whenever you're ready.");
+    }
+  }, [search]);
 
   // Poll every 5s for in-progress statuses
   const { data, isLoading, error } = trpc.letters.detail.useQuery(
@@ -25,7 +41,7 @@ export default function LetterDetail() {
       enabled: !!letterId,
       refetchInterval: (query) => {
         const status = query.state.data?.letter?.status;
-        return status && IN_PROGRESS_STATUSES.includes(status) ? 5000 : false;
+        return status && POLLING_STATUSES.includes(status) ? 5000 : false;
       },
     }
   );
@@ -86,7 +102,8 @@ export default function LetterDetail() {
   const { letter, actions, versions, attachments } = data;
   const finalVersion = versions?.find((v) => v.versionType === "final_approved");
   const userVisibleActions = actions?.filter((a) => a.noteVisibility === "user_visible" && a.noteText);
-  const isInProgress = IN_PROGRESS_STATUSES.includes(letter.status);
+  const isPolling = POLLING_STATUSES.includes(letter.status);
+  const isGeneratedLocked = letter.status === "generated_locked";
 
   return (
     <AppLayout breadcrumb={[{ label: "My Letters", href: "/letters" }, { label: letter.subject }]}>
@@ -109,8 +126,11 @@ export default function LetterDetail() {
                   <span className="text-xs text-muted-foreground">
                     Submitted {new Date(letter.createdAt).toLocaleDateString()}
                   </span>
-                  {isInProgress && (
-                    <span className="text-xs text-blue-500 animate-pulse">Auto-refreshing...</span>
+                  {isPolling && (
+                    <span className="text-xs text-blue-500 animate-pulse flex items-center gap-1">
+                      <Clock className="w-3 h-3" />
+                      Auto-refreshing...
+                    </span>
                   )}
                 </div>
               </div>
@@ -131,8 +151,17 @@ export default function LetterDetail() {
           </CardContent>
         </Card>
 
-        {/* Attorney Notes (user-visible only) */}
-        {userVisibleActions && userVisibleActions.length > 0 && (
+        {/* ── PAYWALL: generated_locked ── */}
+        {isGeneratedLocked && (
+          <LetterPaywall
+            letterId={letterId}
+            letterType={letter.letterType}
+            subject={letter.subject}
+          />
+        )}
+
+        {/* Attorney Notes (user-visible only) — shown for all non-locked statuses */}
+        {!isGeneratedLocked && userVisibleActions && userVisibleActions.length > 0 && (
           <Card>
             <CardHeader className="pb-3">
               <CardTitle className="text-sm flex items-center gap-2">

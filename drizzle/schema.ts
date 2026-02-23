@@ -19,6 +19,7 @@ export const LETTER_STATUSES = [
   "submitted",
   "researching",
   "drafting",
+  "generated_locked", // AI draft complete, awaiting subscriber payment to unlock
   "pending_review",
   "under_review",
   "needs_changes",
@@ -107,6 +108,7 @@ export const letterRequests = mysqlTable("letter_requests", {
     "submitted",
     "researching",
     "drafting",
+    "generated_locked",
     "pending_review",
     "under_review",
     "needs_changes",

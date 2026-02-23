@@ -278,3 +278,63 @@ export async function checkLetterSubmissionAllowed(
 
   return { allowed: true, subscription: sub };
 }
+
+// ─── Create Letter Unlock Checkout (pay-to-unlock paywall) ───────────────────
+/**
+ * Creates a one-time $29 Stripe Checkout session for unlocking a specific
+ * generated_locked letter. The letter_id is stored in session metadata so
+ * the webhook can transition it to pending_review after payment.
+ */
+export async function createLetterUnlockCheckout(params: {
+  userId: number;
+  email: string;
+  name?: string | null;
+  letterId: number;
+  origin: string;
+}): Promise<{ url: string; sessionId: string }> {
+  const { userId, email, name, letterId, origin } = params;
+  const stripe = getStripe();
+  const customerId = await getOrCreateStripeCustomer(userId, email, name);
+
+  const session = await stripe.checkout.sessions.create({
+    customer: customerId,
+    client_reference_id: userId.toString(),
+    mode: "payment",
+    allow_promotion_codes: true,
+    metadata: {
+      user_id: userId.toString(),
+      plan_id: "per_letter",
+      letter_id: letterId.toString(),
+      unlock_type: "letter_unlock",
+      customer_email: email,
+      customer_name: name ?? "",
+    },
+    line_items: [
+      {
+        price_data: {
+          currency: "usd",
+          product_data: {
+            name: "Legal Letter — Attorney Review",
+            description: "Unlock your AI-drafted letter and send it for licensed attorney review and approval.",
+            metadata: { plan_id: "per_letter", letter_id: letterId.toString() },
+          },
+          unit_amount: 2900, // $29
+        },
+        quantity: 1,
+      },
+    ],
+    payment_intent_data: {
+      metadata: {
+        user_id: userId.toString(),
+        plan_id: "per_letter",
+        letter_id: letterId.toString(),
+        unlock_type: "letter_unlock",
+      },
+    },
+    success_url: `${origin}/letters/${letterId}?unlocked=true`,
+    cancel_url: `${origin}/letters/${letterId}?canceled=true`,
+  });
+
+  if (!session.url) throw new Error("Stripe did not return a checkout URL");
+  return { url: session.url, sessionId: session.id };
+}

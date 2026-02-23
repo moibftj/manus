@@ -360,19 +360,20 @@ export async function runAssemblyStage(
     await updateLetterVersionPointers(letterId, { currentAiDraftVersionId: versionId });
     await updateWorkflowJob(jobId, { status: "completed", completedAt: new Date(), responsePayloadJson: { versionId } });
 
-    // Transition to pending_review
-    await updateLetterStatus(letterId, "pending_review");
+    // Transition to generated_locked — subscriber must pay to unlock attorney review
+    await updateLetterStatus(letterId, "generated_locked");
 
     await logReviewAction({
       letterRequestId: letterId,
       actorType: "system",
       action: "ai_pipeline_completed",
-      noteText: `3-stage pipeline complete. Research (Perplexity) → Draft (OpenAI) → Final Assembly (Claude). Letter is ready for attorney review.`,
+      noteText: `3-stage pipeline complete. Research (Perplexity) → Draft (OpenAI) → Final Assembly (Claude). Your letter is ready — unlock it to send for attorney review.`,
+      noteVisibility: "user_visible",
       fromStatus: "drafting",
-      toStatus: "pending_review",
+      toStatus: "generated_locked",
     });
 
-    console.log(`[Pipeline] Stage 3 complete for letter #${letterId} — now pending_review`);
+    console.log(`[Pipeline] Stage 3 complete for letter #${letterId} — now generated_locked (awaiting payment)`);
     return finalLetter;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

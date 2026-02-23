@@ -45,6 +45,7 @@ import { storagePut } from "./storage";
 import {
   createCheckoutSession,
   createBillingPortalSession,
+  createLetterUnlockCheckout,
   getUserSubscription,
   checkLetterSubmissionAllowed,
 } from "./stripe";
@@ -558,6 +559,25 @@ export const appRouter = router({
       });
       return { url };
     }),
+    // ─── Pay-to-unlock: one-time $29 checkout for a specific locked letter ───
+    payToUnlock: subscriberProcedure
+      .input(z.object({ letterId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        // Verify the letter belongs to this subscriber and is in generated_locked status
+        const letter = await getLetterRequestSafeForSubscriber(input.letterId, ctx.user.id);
+        if (!letter) throw new TRPCError({ code: "NOT_FOUND", message: "Letter not found" });
+        if (letter.status !== "generated_locked")
+          throw new TRPCError({ code: "BAD_REQUEST", message: "Letter is not in generated_locked status" });
+        const origin = getAppUrl(ctx.req);
+        const result = await createLetterUnlockCheckout({
+          userId: ctx.user.id,
+          email: ctx.user.email ?? "",
+          name: ctx.user.name,
+          letterId: input.letterId,
+          origin,
+        });
+        return result;
+      }),
   }),
 });
 export type AppRouter = typeof appRouter;
