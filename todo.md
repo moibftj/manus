@@ -594,3 +594,24 @@
 - [x] Welcome email: green accent + 🎉 title
 - [x] All 9 transactional emails updated via shared buildEmailHtml builder
 - [x] 18 email verification tests still passing, 0 TS errors
+
+## Phase 46: Split-Stream Free Trial Paywall
+- [ ] Audit pipeline.ts Stage 3 (Claude assembly) to understand streaming output
+- [ ] Add isFreeTrial flag to user context (first letter = free, rest = paid)
+- [ ] Add server-side valve: stream full content to DB, cut client after Subject + 2 lines for locked users
+- [ ] Add PAYWALL_LOCKED sentinel token to signal client
+- [ ] Update AI system prompt to enforce "Re: [Subject]" format for clean cutoff
+- [ ] Build client-side ghost/blur paywall overlay on LetterDetail page
+- [ ] Show real teaser text (Subject + 2 lines) above blur overlay
+- [ ] Show ghost dummy paragraphs behind blur to simulate full letter
+- [ ] Show "Unlock Now" CTA floating over blur overlay
+- [ ] Wire unlock CTA to existing payToUnlock mutation
+- [ ] Test, checkpoint, and deliver
+
+## Phase 47: Fix Non-Subscriber Paywall Loop
+- [x] Add checkPaywallStatus tRPC query returning: free | pay_per_letter | subscribed
+- [x] Add hasActiveRecurringSubscription helper in stripe.ts (monthly/annual only, not per_letter)
+- [x] Update pipeline.ts Stage 3: if user has active monthly/annual subscription, skip generated_locked and go straight to pending_review
+- [x] Update LetterPaywall.tsx: show subscription upsell card prominently when state is pay_per_letter
+- [x] Keep $200 pay-per-letter option as secondary option (not the only option)
+- [x] Write tests for the three paywall states

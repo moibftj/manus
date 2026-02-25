@@ -27,6 +27,7 @@ import type { IntakeJson, ResearchPacket, DraftOutput } from "../shared/types";
 import { buildNormalizedPromptInput, type NormalizedPromptInput } from "./intake-normalizer";
 import { sendLetterReadyEmail } from "./email";
 import { getUserById, getLetterRequestById as getLetterById } from "./db";
+import { hasActiveRecurringSubscription } from "./stripe";
 
 // ═══════════════════════════════════════════════════════
 // MODEL PROVIDERS
@@ -389,39 +390,45 @@ export async function runAssemblyStage(
     await updateLetterVersionPointers(letterId, { currentAiDraftVersionId: versionId });
     await updateWorkflowJob(jobId, { status: "completed", completedAt: new Date(), responsePayloadJson: { versionId } });
 
-    // Transition to generated_locked — subscriber must pay to unlock attorney review
-    await updateLetterStatus(letterId, "generated_locked");
+    // Determine final status: subscribers with monthly/annual plan bypass the paywall
+    const letterRecord = await getLetterById(letterId);
+    const userId = letterRecord?.userId ?? 0;
+    const isSubscriber = userId > 0 ? await hasActiveRecurringSubscription(userId) : false;
+    const finalStatus = isSubscriber ? "pending_review" : "generated_locked";
 
+    await updateLetterStatus(letterId, finalStatus);
     await logReviewAction({
       letterRequestId: letterId,
       actorType: "system",
       action: "ai_pipeline_completed",
-        noteText: `3-stage pipeline complete. Research (Perplexity) → Draft (Anthropic) → Final Assembly (Anthropic). Your letter is ready — unlock it to send for attorney review.`,
+      noteText: isSubscriber
+        ? `3-stage pipeline complete. Research (Perplexity) → Draft (Anthropic) → Final Assembly (Anthropic). Letter automatically queued for attorney review (active subscription).`
+        : `3-stage pipeline complete. Research (Perplexity) → Draft (Anthropic) → Final Assembly (Anthropic). Your letter is ready — unlock it to send for attorney review.`,
       noteVisibility: "user_visible",
       fromStatus: "drafting",
-      toStatus: "generated_locked",
+      toStatus: finalStatus,
     });
-
     // Send "letter ready" email to subscriber (non-blocking)
-    getLetterById(letterId).then(async (letterRecord) => {
-      if (!letterRecord) return;
-      const subscriber = await getUserById(letterRecord.userId);
-      const appBaseUrl = process.env.VITE_APP_ID
-        ? `https://${process.env.VITE_APP_ID}.manus.space`
-        : "https://talk-to-my-lawyer.manus.space";
-      if (subscriber?.email) {
-        await sendLetterReadyEmail({
-          to: subscriber.email,
-          name: subscriber.name ?? "Subscriber",
-          subject: letterRecord.subject,
-          letterId,
-          appUrl: appBaseUrl,
-        });
-        console.log(`[Pipeline] Letter-ready email sent to ${subscriber.email} for letter #${letterId}`);
-      }
-    }).catch((emailErr) => console.error(`[Pipeline] Failed to send letter-ready email for #${letterId}:`, emailErr));
-
-    console.log(`[Pipeline] Stage 3 complete for letter #${letterId} — now generated_locked (awaiting payment)`);
+    (() => {
+      const record = letterRecord;
+      if (!record) return;
+      getUserById(record.userId).then(async (subscriber) => {
+        const appBaseUrl = process.env.VITE_APP_ID
+          ? `https://${process.env.VITE_APP_ID}.manus.space`
+          : "https://talk-to-my-lawyer.manus.space";
+        if (subscriber?.email) {
+          await sendLetterReadyEmail({
+            to: subscriber.email,
+            name: subscriber.name ?? "Subscriber",
+            subject: record.subject,
+            letterId,
+            appUrl: appBaseUrl,
+          });
+          console.log(`[Pipeline] Letter-ready email sent to ${subscriber.email} for letter #${letterId}`);
+        }
+      }).catch((emailErr) => console.error(`[Pipeline] Failed to send letter-ready email for #${letterId}:`, emailErr));
+    })();
+    console.log(`[Pipeline] Stage 3 complete for letter #${letterId} — status: ${finalStatus}${isSubscriber ? " (subscriber bypass)" : " (awaiting payment)"}`);
     return finalLetter;
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);

@@ -72,6 +72,7 @@ import {
   createLetterUnlockCheckout,
   getUserSubscription,
   checkLetterSubmissionAllowed,
+  hasActiveRecurringSubscription,
 } from "./stripe";
 
 // ─── Role Guards ──────────────────────────────────────────────────────────────
@@ -736,9 +737,35 @@ export const appRouter = router({
       });
       return { url };
     }),
-    // ─── Check if user qualifies for free first letter ───
+    // ─── Check paywall status: free | pay_per_letter | subscribed ───
+    /**
+     * Returns the paywall state for the current user:
+     *   - "free"           — first letter, no prior unlocked letters
+     *   - "subscribed"     — active monthly/annual plan (bypass paywall entirely)
+     *   - "pay_per_letter" — free letter already used, no active recurring subscription
+     */
+    checkPaywallStatus: subscriberProcedure.query(async ({ ctx }) => {
+      // 1. Check for active monthly/annual subscription first
+      const isSubscribed = await hasActiveRecurringSubscription(ctx.user.id);
+      if (isSubscribed) return { state: "subscribed" as const, eligible: false };
+      // 2. Count letters that moved past generated_locked (i.e., were unlocked/paid/free)
+      const db = await (await import("./db")).getDb();
+      if (!db) return { state: "pay_per_letter" as const, eligible: false };
+      const { letterRequests } = await import("../drizzle/schema");
+      const { eq, and, notInArray } = await import("drizzle-orm");
+      const unlockedLetters = await db.select({ id: letterRequests.id })
+        .from(letterRequests)
+        .where(and(
+          eq(letterRequests.userId, ctx.user.id),
+          notInArray(letterRequests.status, ["submitted", "researching", "drafting", "generated_locked"])
+        ));
+      if (unlockedLetters.length === 0) return { state: "free" as const, eligible: true };
+      return { state: "pay_per_letter" as const, eligible: false };
+    }),
+    // ─── Legacy alias: kept for backward compat (LetterPaywall still calls this) ───
     checkFirstLetterFree: subscriberProcedure.query(async ({ ctx }) => {
-      // Count how many letters this user has that went past generated_locked (i.e., were paid/unlocked)
+      const isSubscribed = await hasActiveRecurringSubscription(ctx.user.id);
+      if (isSubscribed) return { eligible: false };
       const db = await (await import("./db")).getDb();
       if (!db) return { eligible: false };
       const { letterRequests } = await import("../drizzle/schema");

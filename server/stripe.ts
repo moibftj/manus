@@ -280,6 +280,20 @@ export async function checkLetterSubmissionAllowed(
   return { allowed: true, subscription: sub };
 }
 
+// ─── Check if User Has Active Recurring Subscription (monthly or annual) ────────
+/**
+ * Returns true only for users with an active monthly or annual subscription.
+ * Per-letter (pay-as-you-go) payments do NOT count as a recurring subscription.
+ * Used to determine whether to bypass the paywall at pipeline completion.
+ */
+export async function hasActiveRecurringSubscription(userId: number): Promise<boolean> {
+  const sub = await getUserSubscription(userId);
+  if (!sub) return false;
+  if (sub.status !== "active") return false;
+  // per_letter is a one-time payment, not a recurring subscription
+  return sub.plan === "monthly" || sub.plan === "annual";
+}
+
 // ─── Create Letter Unlock Checkout (pay-to-unlock paywall) ───────────────────
 /**
  * Creates a one-time $200 Stripe Checkout session for unlocking a specific
