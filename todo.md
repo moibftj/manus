@@ -688,3 +688,20 @@
 - [x] Integrate breadcrumbs into AppLayout (subscriber, admin, employee areas)
 - [x] Ensure breadcrumbs are responsive and hidden on mobile if needed
 - [x] Integrate Phase 49 landing page images into Home.tsx (hero, security, attorney review sections)
+
+## Phase 51: Perplexity Research Prompt Upgrade (8-Task Deep Legal Research)
+
+- [x] Replace buildResearchPrompt with buildResearchSystemPrompt + buildResearchUserPrompt (system/user split)
+- [x] 8 research tasks: statutes, local ordinances, court decisions, SOL, pre-suit requirements, remedies, enforcement climate, defenses
+- [x] Rich JSON output schema: jurisdictionProfile, recentCasePrecedents, statuteOfLimitations, preSuitRequirements, availableRemedies, localJurisdictionElements, enforcementClimate, commonDefenses, riskFlags, draftingConstraints
+- [x] Update generateText call: system + prompt, maxOutputTokens 6000
+- [x] Update validateResearchPacket: soft-warn on missing new fields (backwards compatible)
+- [x] Run tests and verify pipeline still works (310/320 passing, 10 pre-existing)
+- [x] Replace buildDraftingPrompt with buildDraftingSystemPrompt + buildDraftingUserPrompt (system/user split)
+- [x] Curated context blocks: rules sorted by confidence, cases formatted narratively, remedies scannable
+- [x] Pre-empt defenses in legal basis section using commonDefenses from research
+- [x] Dynamic response deadline calculation (10d aggressive, 14d firm, 21d moderate)
+- [x] Leverage enforcement climate in consequence paragraph
+- [x] Rich attorneyReviewSummary memo (statutes chosen, theory strength, factual gaps, demand support)
+- [x] Update runDraftingStage: system + prompt, maxOutputTokens 8000
+- [x] Update assembly prompt (system+user split) to leverage richer research data with 10000 tokens
