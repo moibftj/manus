@@ -343,7 +343,7 @@ export default function LetterDetail() {
                   </Button>
                   <Button onClick={handleDownloadPdf} size="sm" className="flex-1 sm:flex-initial">
                     <Download className="w-4 h-4 mr-1" />
-                    {(data?.letter as any)?.pdfUrl ? "PDF" : "Download"}
+                    {(data?.letter as any)?.pdfUrl ? "Download PDF" : "Download"}
                   </Button>
                 </>
               )}
@@ -452,7 +452,7 @@ export default function LetterDetail() {
                   </Button>
                   <Button onClick={handleDownloadPdf} size="sm" variant="outline" className="bg-background border-green-300 text-green-700 hover:bg-green-50">
                     <Download className="w-3.5 h-3.5 mr-1.5" />
-                    {(data?.letter as any)?.pdfUrl ? "PDF" : "Download"}
+                    {(data?.letter as any)?.pdfUrl ? "Download PDF" : "Download"}
                   </Button>
                 </div>
               </div>

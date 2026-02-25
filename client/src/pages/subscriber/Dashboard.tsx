@@ -28,6 +28,7 @@ import { Link } from "wouter";
 import { LETTER_TYPE_CONFIG } from "../../../../shared/types";
 import { useLetterListRealtime } from "@/hooks/useLetterRealtime";
 import { useAuth } from "@/_core/hooks/useAuth";
+import { Badge } from "@/components/ui/badge";
 
 // Statuses where the dashboard should auto-refresh
 const ACTIVE_STATUSES = ["submitted", "researching", "drafting", "pending_review", "under_review"];
@@ -188,6 +189,7 @@ function PipelineStepper({ status }: { status: string }) {
 export default function SubscriberDashboard() {
   const { user } = useAuth();
   const utils = trpc.useUtils();
+  const { data: subscription } = trpc.billing.getSubscription.useQuery();
   const { data: letters, isLoading } = trpc.letters.myLetters.useQuery(undefined, {
     refetchInterval: (query) => {
       const list = query.state.data;
@@ -232,6 +234,76 @@ export default function SubscriberDashboard() {
             </Link>
           </Button>
         </div>
+
+        {/* Subscription Status Banner */}
+        {subscription && subscription.status === "active" && (subscription.plan === "monthly" || subscription.plan === "annual") && (
+          <Card className="border-green-200 bg-green-50/50">
+            <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-green-100 rounded-lg flex items-center justify-center">
+                  <CheckCircle className="w-5 h-5 text-green-600" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-green-800">Active Subscriber</span>
+                    <Badge className={subscription.plan === "annual" ? "bg-amber-100 text-amber-800" : "bg-blue-100 text-blue-800"}>
+                      {subscription.plan === "annual" ? "Annual Plan" : "Monthly Plan"}
+                    </Badge>
+                  </div>
+                  <div className="flex items-center gap-3 mt-0.5 text-xs text-green-700">
+                    <span>
+                      {subscription.lettersAllowed === -1
+                        ? "Unlimited letters"
+                        : `${Math.max(0, subscription.lettersAllowed - subscription.lettersUsed)} of ${subscription.lettersAllowed} letters remaining`}
+                    </span>
+                    {subscription.currentPeriodEnd && (
+                      <>
+                        <span className="text-green-400">·</span>
+                        <span>
+                          {subscription.cancelAtPeriodEnd ? "Expires" : "Renews"}{" "}
+                          {new Date(subscription.currentPeriodEnd).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <Button asChild variant="outline" size="sm" className="border-green-300 text-green-700 hover:bg-green-100">
+                <Link href="/subscriber/billing">
+                  Manage Plan
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Free tier / no subscription banner */}
+        {(!subscription || subscription.status !== "active" || subscription.plan === "per_letter") && (
+          <Card className="border-blue-200 bg-blue-50/50">
+            <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-blue-100 rounded-lg flex items-center justify-center">
+                  <CreditCard className="w-5 h-5 text-blue-600" />
+                </div>
+                <div>
+                  <span className="text-sm font-semibold text-blue-800">
+                    {stats.total === 0 ? "Your first letter is free" : "Upgrade to a subscription"}
+                  </span>
+                  <p className="text-xs text-blue-600 mt-0.5">
+                    {stats.total === 0
+                      ? "No credit card required — submit your first legal matter now."
+                      : "Get 4 letters/month for $79 or 48 letters/year for $599. Skip the $200 per-letter fee."}
+                  </p>
+                </div>
+              </div>
+              <Button asChild size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+                <Link href={stats.total === 0 ? "/submit" : "/subscriber/billing"}>
+                  {stats.total === 0 ? "Start Free Letter" : "View Plans"}
+                </Link>
+              </Button>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">

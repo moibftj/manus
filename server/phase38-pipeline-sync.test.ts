@@ -83,8 +83,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       // Find the claim section
       const claimSection = content.substring(
-        content.indexOf("claim: employeeProcedure"),
-        content.indexOf("approve: employeeProcedure")
+        content.indexOf("claim: attorneyProcedure"),
+        content.indexOf("approve: attorneyProcedure")
       );
       expect(claimSection).toContain("sendStatusUpdateEmail");
     });
@@ -92,8 +92,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
     it("claim mutation creates in-app notification for subscriber", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       const claimSection = content.substring(
-        content.indexOf("claim: employeeProcedure"),
-        content.indexOf("approve: employeeProcedure")
+        content.indexOf("claim: attorneyProcedure"),
+        content.indexOf("approve: attorneyProcedure")
       );
       expect(claimSection).toContain("createNotification");
       expect(claimSection).toContain("letter_under_review");
@@ -102,8 +102,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
     it("claim mutation sends under_review status in email", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       const claimSection = content.substring(
-        content.indexOf("claim: employeeProcedure"),
-        content.indexOf("approve: employeeProcedure")
+        content.indexOf("claim: attorneyProcedure"),
+        content.indexOf("approve: attorneyProcedure")
       );
       expect(claimSection).toContain('newStatus: "under_review"');
     });
@@ -114,8 +114,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
     it("approve mutation calls generateAndUploadApprovedPdf", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       const approveSection = content.substring(
-        content.indexOf("approve: employeeProcedure"),
-        content.indexOf("reject: employeeProcedure")
+        content.indexOf("approve: attorneyProcedure"),
+        content.indexOf("reject: attorneyProcedure")
       );
       expect(approveSection).toContain("generateAndUploadApprovedPdf");
     });
@@ -123,8 +123,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
     it("approve mutation calls updateLetterPdfUrl", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       const approveSection = content.substring(
-        content.indexOf("approve: employeeProcedure"),
-        content.indexOf("reject: employeeProcedure")
+        content.indexOf("approve: attorneyProcedure"),
+        content.indexOf("reject: attorneyProcedure")
       );
       expect(approveSection).toContain("updateLetterPdfUrl");
     });
@@ -132,8 +132,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
     it("approve mutation passes pdfUrl to sendLetterApprovedEmail", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       const approveSection = content.substring(
-        content.indexOf("approve: employeeProcedure"),
-        content.indexOf("reject: employeeProcedure")
+        content.indexOf("approve: attorneyProcedure"),
+        content.indexOf("reject: attorneyProcedure")
       );
       expect(approveSection).toContain("pdfUrl");
       expect(approveSection).toContain("sendLetterApprovedEmail");
@@ -142,8 +142,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
     it("approve mutation returns pdfUrl in response", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       const approveSection = content.substring(
-        content.indexOf("approve: employeeProcedure"),
-        content.indexOf("reject: employeeProcedure")
+        content.indexOf("approve: attorneyProcedure"),
+        content.indexOf("reject: attorneyProcedure")
       );
       expect(approveSection).toContain("return { success: true, versionId, pdfUrl }");
     });
@@ -151,8 +151,8 @@ describe("Phase 38: Pipeline Sync + PDF Generation", () => {
     it("PDF generation failure does not block approval", () => {
       const content = fs.readFileSync(path.join(SERVER_DIR, "routers.ts"), "utf-8");
       const approveSection = content.substring(
-        content.indexOf("approve: employeeProcedure"),
-        content.indexOf("reject: employeeProcedure")
+        content.indexOf("approve: attorneyProcedure"),
+        content.indexOf("reject: attorneyProcedure")
       );
       // Should have try/catch around PDF generation
       expect(approveSection).toContain("Non-blocking: approval still succeeds");

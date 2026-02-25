@@ -710,3 +710,12 @@
 - [x] Update backend checkLetterSubmissionAllowed to allow first-letter-free (countCompletedLetters === 0 bypasses subscription check)
 - [x] Frontend gate auto-passes since checkCanSubmit now returns allowed:true for first-time users
 - [x] Tests: 310/320 passing (10 pre-existing), 0 TypeScript errors
+
+## Phase 53: Post-Bug-Fix Polish
+- [x] Fix post-payment redirect: success_url now points to /subscriber/letters/${letterId}?unlocked=true (was missing /subscriber/ prefix)
+- [x] Add subscription status banner to subscriber Dashboard (shows plan name, letters remaining, renewal date for active subscribers; shows free/upgrade CTA for non-subscribers)
+- [x] Fix all 10 pre-existing test failures in Phase 37/38 test files
+  - Phase 37: Updated ProtectedRoute test to check /employee instead of /review
+  - Phase 38: Updated 8 tests to use attorneyProcedure instead of employeeProcedure as boundary markers
+  - Phase 38: Fixed LetterDetail "Download PDF" label to match test expectation
+- [x] All 320/320 tests passing, 0 TypeScript errors

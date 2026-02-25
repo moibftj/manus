@@ -26,7 +26,7 @@ describe("Phase 37: Role-based routing, FAQ, Onboarding, Mobile nav", () => {
     it("should redirect unauthorized roles to their correct dashboard", () => {
       const content = readFileSync(filePath, "utf-8");
       expect(content).toContain("/admin");
-      expect(content).toContain("/review");
+      expect(content).toContain("/employee");
       expect(content).toContain("/dashboard");
     });
 
