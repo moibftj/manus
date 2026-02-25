@@ -274,3 +274,19 @@
 ## Phase 29: Favicon & Logo Branding
 - [x] Set VITE_APP_LOGO to Talk-to-My-Lawyer logo for Manus OAuth login page (manual: Settings → General)
 - [x] Ensure website favicon matches the logo (added to index.html)
+
+## Phase 30: Enhanced Subscriber Dashboard
+- [x] Add letter pipeline status cards with visual progress indicators
+- [x] Show current status (Drafting, In Review, Approved, etc.) with color-coded badges
+- [x] Add progress bar/stepper showing where each letter is in the pipeline
+- [x] Add clear next-action CTAs per letter status (e.g., "Pay to Unlock", "Awaiting Review")
+- [x] Ensure mobile-responsive layout
+- [x] Add summary stats cards (Total Letters, In Progress, Approved, Needs Attention)
+- [x] Add relative timestamps (e.g., "5m ago", "2h ago")
+- [x] Add welcome banner with Submit New Letter CTA
+- [x] Add Pipeline Status Guide section explaining each status
+- [x] Animated spinner for active pipeline stages (researching, drafting)
+- [x] Pulsing amber indicator for paywall (generated_locked)
+- [x] "Action Required" badge for letters needing subscriber attention
+- [x] 8-second auto-polling when any letter has active pipeline status
+- [x] Tests: 99/99 passing (26 new dashboard enhancement tests), 0 TypeScript errors
