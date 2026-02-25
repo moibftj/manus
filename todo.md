@@ -399,3 +399,10 @@
 - [x] Fix auth.logout tests to expect 2 cookies cleared (sb_session + legacy)
 - [x] 180/180 tests passing, 0 TypeScript errors
 - [x] Server health: 0 LSP errors, 0 TypeScript errors
+
+## Phase 36: Fix Manus OAuth Redirect + SEO
+- [x] Remove all remaining Manus OAuth redirect references (getLoginUrl removed from DashboardLayout, Home, Pricing)
+- [x] Fix homepage title: 44 chars — "Talk to My Lawyer — AI-Drafted Legal Letters"
+- [x] Add meta description: 148 chars — covers demand letters, cease and desist, breach of contract, starting at $29
+- [x] Add meta keywords: legal letters, attorney reviewed, demand letter, cease and desist, breach of contract, AI legal
+- [x] Push all changes to GitHub

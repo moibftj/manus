@@ -1,5 +1,4 @@
 import { useAuth } from "@/_core/hooks/useAuth";
-import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
@@ -40,7 +39,7 @@ export default function Home() {
   }
 
   const goToLogin = () => {
-    window.location.href = getLoginUrl();
+    navigate("/login");
   };
 
   const scrollTo = (id: string) => {

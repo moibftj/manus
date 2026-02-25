@@ -6,7 +6,6 @@ import { trpc } from "@/lib/trpc";
 import { CheckCircle2, Loader2, Scale, Shield, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
-import { getLoginUrl } from "@/const";
 
 const PLANS = [
   {
@@ -81,7 +80,7 @@ export default function Pricing() {
 
   const handleSelectPlan = (planId: string) => {
     if (!isAuthenticated) {
-      window.location.href = getLoginUrl();
+      navigate("/login");
       return;
     }
     checkoutMutation.mutate({ planId });
