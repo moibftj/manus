@@ -1,20 +1,20 @@
 import AppLayout from "@/components/shared/AppLayout";
 import StatusBadge from "@/components/shared/StatusBadge";
+import ReviewModal from "@/components/shared/ReviewModal";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { FileText, Search, ArrowRight } from "lucide-react";
-import { Link } from "wouter";
 import { useState } from "react";
 import { LETTER_TYPE_CONFIG } from "../../../../shared/types";
 
 export default function ReviewQueue() {
   const { data: letters, isLoading } = trpc.review.queue.useQuery({}, {
-    // Auto-refresh every 10s so new pending_review letters appear in real-time
     refetchInterval: 10000,
   });
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("active");
+  const [selectedLetterId, setSelectedLetterId] = useState<number | null>(null);
 
   const filtered = (letters ?? []).filter((l) => {
     const matchSearch = l.subject.toLowerCase().includes(search.toLowerCase());
@@ -70,44 +70,55 @@ export default function ReviewQueue() {
         ) : (
           <div className="space-y-2">
             {filtered.map((letter) => (
-              <Link key={letter.id} href={`/review/${letter.id}`}>
-                <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <FileText className="w-5 h-5 text-primary" />
+              <div
+                key={letter.id}
+                onClick={() => setSelectedLetterId(letter.id)}
+                className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground leading-tight">{letter.subject}</p>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-foreground leading-tight">{letter.subject}</p>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {LETTER_TYPE_CONFIG[letter.letterType]?.label ?? letter.letterType}
-                        {letter.jurisdictionState && ` · ${letter.jurisdictionState}`}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <StatusBadge status={letter.status} size="sm" />
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(letter.createdAt).toLocaleDateString()}
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {LETTER_TYPE_CONFIG[letter.letterType]?.label ?? letter.letterType}
+                      {letter.jurisdictionState && ` · ${letter.jurisdictionState}`}
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <StatusBadge status={letter.status} size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(letter.createdAt).toLocaleDateString()}
+                      </span>
+                      {letter.priority && letter.priority !== "normal" && (
+                        <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
+                          letter.priority === "urgent" ? "bg-red-100 text-red-700" :
+                          letter.priority === "high" ? "bg-orange-100 text-orange-700" :
+                          "bg-gray-100 text-gray-600"
+                        }`}>
+                          {letter.priority.toUpperCase()}
                         </span>
-                        {letter.priority && letter.priority !== "normal" && (
-                          <span className={`text-xs font-medium px-1.5 py-0.5 rounded ${
-                            letter.priority === "urgent" ? "bg-red-100 text-red-700" :
-                            letter.priority === "high" ? "bg-orange-100 text-orange-700" :
-                            "bg-gray-100 text-gray-600"
-                          }`}>
-                            {letter.priority.toUpperCase()}
-                          </span>
-                        )}
-                      </div>
+                      )}
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      {selectedLetterId !== null && (
+        <ReviewModal
+          letterId={selectedLetterId}
+          open={true}
+          onOpenChange={(open) => { if (!open) setSelectedLetterId(null); }}
+        />
+      )}
     </AppLayout>
   );
 }

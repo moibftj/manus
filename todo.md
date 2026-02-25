@@ -290,3 +290,17 @@
 - [x] "Action Required" badge for letters needing subscriber attention
 - [x] 8-second auto-polling when any letter has active pipeline status
 - [x] Tests: 99/99 passing (26 new dashboard enhancement tests), 0 TypeScript errors
+
+## Phase 31: Attorney Review Modal with Tiptap Rich Text Editor
+- [x] Install Tiptap packages (@tiptap/react, @tiptap/starter-kit, @tiptap/extension-*)
+- [x] Build reusable RichTextEditor component with toolbar (bold, italic, headings, lists, undo/redo)
+- [x] Build ReviewModal component with intake summary panel + Tiptap editor + action buttons
+- [x] Add prominent Approve button (green, top-right) with confirmation dialog
+- [x] Add Reject and Request Changes actions with notes input
+- [x] Wire modal to existing tRPC review mutations (claim, saveEdit, approve, reject, requestChanges)
+- [x] Integrate modal into ReviewQueue page (click row → opens modal instead of navigating)
+- [x] Integrate modal into employee Dashboard review cards
+- [x] Preserve original AI draft (immutable) + show diff/comparison
+- [x] Add attorney notes field for review comments
+- [x] Mobile-responsive modal layout
+- [x] Write tests for review modal logic (31 tests passing)

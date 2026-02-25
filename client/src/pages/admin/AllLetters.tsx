@@ -1,5 +1,6 @@
 import AppLayout from "@/components/shared/AppLayout";
 import StatusBadge from "@/components/shared/StatusBadge";
+import ReviewModal from "@/components/shared/ReviewModal";
 import { trpc } from "@/lib/trpc";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -7,16 +8,28 @@ import { FileText, Search, ArrowRight } from "lucide-react";
 import { Link } from "wouter";
 import { useState } from "react";
 
+const REVIEWABLE_STATUSES = ["pending_review", "under_review", "needs_changes", "approved", "rejected"];
+
 export default function AdminAllLetters() {
   const { data: letters, isLoading } = trpc.admin.allLetters.useQuery({});
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [selectedLetterId, setSelectedLetterId] = useState<number | null>(null);
 
   const filtered = (letters ?? []).filter((l) => {
     const matchSearch = l.subject.toLowerCase().includes(search.toLowerCase());
     const matchStatus = statusFilter === "all" || l.status === statusFilter;
     return matchSearch && matchStatus;
   });
+
+  const handleLetterClick = (letter: { id: number; status: string }) => {
+    // Open ReviewModal for reviewable statuses, navigate to admin detail for others
+    if (REVIEWABLE_STATUSES.includes(letter.status)) {
+      setSelectedLetterId(letter.id);
+    } else {
+      window.location.href = `/admin/letters/${letter.id}`;
+    }
+  };
 
   return (
     <AppLayout breadcrumb={[{ label: "Admin", href: "/admin" }, { label: "All Letters" }]}>
@@ -61,37 +74,48 @@ export default function AdminAllLetters() {
         ) : (
           <div className="space-y-2">
             {filtered.map((letter) => (
-              <Link key={letter.id} href={`/admin/letters/${letter.id}`}>
-                <div className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer">
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
-                      <FileText className="w-5 h-5 text-primary" />
+              <div
+                key={letter.id}
+                onClick={() => handleLetterClick(letter)}
+                className="bg-card border border-border rounded-xl p-4 hover:border-primary/40 hover:shadow-sm transition-all cursor-pointer"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <FileText className="w-5 h-5 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-semibold text-foreground leading-tight">{letter.subject}</p>
+                      <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm font-semibold text-foreground leading-tight">{letter.subject}</p>
-                        <ArrowRight className="w-4 h-4 text-muted-foreground flex-shrink-0 mt-0.5" />
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-0.5">
-                        {letter.letterType} · {letter.jurisdictionState ?? "N/A"}
-                      </p>
-                      <div className="flex items-center gap-3 mt-2">
-                        <StatusBadge status={letter.status} size="sm" />
-                        <span className="text-xs text-muted-foreground">
-                          {new Date(letter.createdAt).toLocaleDateString()}
-                        </span>
-                        <span className="text-xs text-muted-foreground">
-                          User #{letter.userId}
-                        </span>
-                      </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {letter.letterType} · {letter.jurisdictionState ?? "N/A"}
+                    </p>
+                    <div className="flex items-center gap-3 mt-2">
+                      <StatusBadge status={letter.status} size="sm" />
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(letter.createdAt).toLocaleDateString()}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        User #{letter.userId}
+                      </span>
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      {/* Review Modal */}
+      {selectedLetterId !== null && (
+        <ReviewModal
+          letterId={selectedLetterId}
+          open={true}
+          onOpenChange={(open) => { if (!open) setSelectedLetterId(null); }}
+        />
+      )}
     </AppLayout>
   );
 }

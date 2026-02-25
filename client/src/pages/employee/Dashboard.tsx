@@ -1,20 +1,23 @@
 import AppLayout from "@/components/shared/AppLayout";
 import StatusBadge from "@/components/shared/StatusBadge";
+import ReviewModal from "@/components/shared/ReviewModal";
 import { trpc } from "@/lib/trpc";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ClipboardList, Clock, CheckCircle, ArrowRight, FileText, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
+import { useState } from "react";
 import { LETTER_TYPE_CONFIG } from "../../../../shared/types";
 
 export default function EmployeeDashboard() {
   const { data: pendingLetters } = trpc.review.queue.useQuery({ status: "pending_review" }, {
-    refetchInterval: 15000, // Poll every 15s for new pending letters
+    refetchInterval: 15000,
   });
   const { data: myLetters } = trpc.review.queue.useQuery({ myAssigned: true }, {
     refetchInterval: 15000,
   });
   const { data: allLetters } = trpc.review.queue.useQuery({});
+  const [selectedLetterId, setSelectedLetterId] = useState<number | null>(null);
 
   const stats = {
     pending: pendingLetters?.length ?? 0,
@@ -78,24 +81,26 @@ export default function EmployeeDashboard() {
             ) : (
               <div className="divide-y divide-border">
                 {pendingLetters.slice(0, 5).map((letter) => (
-                  <Link key={letter.id} href={`/review/${letter.id}`}>
-                    <div className="flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer">
-                      <div className="w-9 h-9 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-amber-600" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{letter.subject}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {LETTER_TYPE_CONFIG[letter.letterType]?.label ?? letter.letterType}
-                          {letter.jurisdictionState && ` · ${letter.jurisdictionState}`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <StatusBadge status={letter.status} size="sm" />
-                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                      </div>
+                  <div
+                    key={letter.id}
+                    onClick={() => setSelectedLetterId(letter.id)}
+                    className="flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                  >
+                    <div className="w-9 h-9 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-amber-600" />
                     </div>
-                  </Link>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{letter.subject}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {LETTER_TYPE_CONFIG[letter.letterType]?.label ?? letter.letterType}
+                        {letter.jurisdictionState && ` · ${letter.jurisdictionState}`}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <StatusBadge status={letter.status} size="sm" />
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
@@ -111,29 +116,40 @@ export default function EmployeeDashboard() {
             <CardContent className="p-0">
               <div className="divide-y divide-border">
                 {myLetters.map((letter) => (
-                  <Link key={letter.id} href={`/review/${letter.id}`}>
-                    <div className="flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer">
-                      <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <FileText className="w-4 h-4 text-primary" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{letter.subject}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {LETTER_TYPE_CONFIG[letter.letterType]?.label ?? letter.letterType}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-2 flex-shrink-0">
-                        <StatusBadge status={letter.status} size="sm" />
-                        <ArrowRight className="w-3 h-3 text-muted-foreground" />
-                      </div>
+                  <div
+                    key={letter.id}
+                    onClick={() => setSelectedLetterId(letter.id)}
+                    className="flex items-center gap-4 px-4 py-3 hover:bg-muted/50 transition-colors cursor-pointer"
+                  >
+                    <div className="w-9 h-9 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <FileText className="w-4 h-4 text-primary" />
                     </div>
-                  </Link>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-foreground truncate">{letter.subject}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {LETTER_TYPE_CONFIG[letter.letterType]?.label ?? letter.letterType}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <StatusBadge status={letter.status} size="sm" />
+                      <ArrowRight className="w-3 h-3 text-muted-foreground" />
+                    </div>
+                  </div>
                 ))}
               </div>
             </CardContent>
           </Card>
         )}
       </div>
+
+      {/* Review Modal */}
+      {selectedLetterId !== null && (
+        <ReviewModal
+          letterId={selectedLetterId}
+          open={true}
+          onOpenChange={(open) => { if (!open) setSelectedLetterId(null); }}
+        />
+      )}
     </AppLayout>
   );
 }
