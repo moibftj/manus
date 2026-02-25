@@ -3,7 +3,21 @@ import { getLoginUrl } from "@/const";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { useEffect } from "react";
-import { Scale, FileText, Shield, Clock, CheckCircle, ArrowRight, Star, Zap, Users } from "lucide-react";
+import {
+  CheckCircle2,
+  ArrowRight,
+  Shield,
+  FileText,
+  Play,
+  Settings2,
+  Zap,
+  Copy,
+  Share2,
+  History,
+} from "lucide-react";
+
+const LOGO_URL =
+  "https://qtrypzzcjebvfcihiynt.supabase.co/storage/v1/object/public/base44-prod/public/699538fe166a21e073a8647e/ef385eee8_TALK_LOGO-removebg-preview.png";
 
 export default function Home() {
   const { user, isAuthenticated, loading } = useAuth();
@@ -19,71 +33,197 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
+  const goToLogin = () => {
+    window.location.href = getLoginUrl();
+  };
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
   return (
-    <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b border-border bg-card/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+    <div className="min-h-screen bg-white">
+      {/* Nav */}
+      <nav className="fixed top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 bg-primary rounded-xl flex items-center justify-center">
-              <Scale className="w-5 h-5 text-primary-foreground" />
-            </div>
-            <div>
-              <span className="font-bold text-foreground text-sm leading-tight block">Talk to My</span>
-              <span className="font-bold text-primary text-sm leading-tight block">Lawyer</span>
-            </div>
+            <img
+              src={LOGO_URL}
+              alt="Talk to My Lawyer"
+              className="w-10 h-10 object-contain"
+            />
+            <span className="font-bold text-slate-900 text-base hidden sm:block">
+              Talk-To-My-Lawyer
+            </span>
           </div>
-          <Button asChild size="sm"><a href={getLoginUrl()}>Sign In</a></Button>
+          <div className="flex items-center gap-6">
+            <button
+              onClick={() => scrollTo("features")}
+              className="text-slate-600 hover:text-slate-900 text-sm font-medium hidden sm:block"
+            >
+              Features
+            </button>
+            <button
+              onClick={() => scrollTo("pricing")}
+              className="text-slate-600 hover:text-slate-900 text-sm font-medium hidden sm:block"
+            >
+              Pricing
+            </button>
+            <button
+              onClick={goToLogin}
+              className="text-slate-600 hover:text-slate-900 text-sm font-medium hidden sm:block"
+            >
+              Sign In
+            </button>
+            <Button
+              className="bg-blue-600 hover:bg-blue-700 text-white rounded-lg px-5 h-9 text-sm font-semibold flex items-center gap-2"
+              onClick={goToLogin}
+            >
+              Get Started <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
         </div>
       </nav>
 
       {/* Hero */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-background" />
-        <div className="relative max-w-6xl mx-auto px-4 sm:px-6 py-20 lg:py-28">
-          <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary text-xs font-semibold px-3 py-1.5 rounded-full mb-6">
-              <Zap className="w-3.5 h-3.5" /> AI-Powered Legal Letters, Attorney Reviewed
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-foreground leading-tight mb-6">
-              Professional Legal Letters <span className="text-primary">in Hours,</span> Not Days
-            </h1>
-            <p className="text-lg text-muted-foreground mb-8 leading-relaxed max-w-2xl">
-              Submit your legal matter, our AI researches applicable laws and drafts a professional letter, then a licensed attorney reviews and approves it.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-3">
-              <Button asChild size="lg" className="text-base px-8">
-                <a href={getLoginUrl()}>Get Started Free <ArrowRight className="w-4 h-4 ml-2" /></a>
-              </Button>
-            </div>
+      <section
+        className="pt-16 min-h-[90vh] flex items-center"
+        style={{
+          background:
+            "linear-gradient(135deg, #eef2ff 0%, #e0e7ff 40%, #dbeafe 100%)",
+        }}
+      >
+        <div className="max-w-6xl mx-auto px-4 py-20 text-center w-full">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 bg-white/70 border border-blue-200 rounded-full px-4 py-1.5 mb-8 text-sm text-blue-700 font-medium shadow-sm">
+            <span className="w-2 h-2 bg-blue-500 rounded-full inline-block"></span>
+            AI-Powered · Attorney-Reviewed · Guaranteed Quality
+          </div>
+
+          <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 mb-4 leading-tight tracking-tight">
+            Get professional{" "}
+            <span className="text-blue-500">Lawyer-Drafted</span>
+            <br />
+            letters for
+          </h1>
+
+          {/* Letter type pills */}
+          <div className="flex flex-wrap justify-center gap-2.5 mb-8 mt-6">
+            {[
+              "Breach of Contract",
+              "Demand for Payment",
+              "Cease and Desist",
+              "Pre-Litigation Settlement",
+              "Debt Collection",
+            ].map((name) => (
+              <button
+                key={name}
+                onClick={goToLogin}
+                className="bg-white/80 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-1.5 rounded-full shadow-sm hover:border-blue-300 hover:bg-blue-50 transition-colors"
+              >
+                {name}
+              </button>
+            ))}
+            <span className="bg-white/80 border border-slate-200 text-slate-700 text-sm font-medium px-4 py-1.5 rounded-full shadow-sm cursor-default">
+              And more
+            </span>
+          </div>
+
+          <p className="text-slate-700 text-lg mb-10 font-medium">
+            Resolve conflicts quickly and affordably — only{" "}
+            <span className="text-blue-600 font-bold">$200 per letter.</span>
+          </p>
+
+          <div className="flex flex-col sm:flex-row gap-3 justify-center mb-14">
+            <Button
+              size="lg"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-12 text-base font-semibold rounded-xl shadow-lg shadow-blue-200 flex items-center gap-2"
+              onClick={goToLogin}
+            >
+              <Play className="w-4 h-4" fill="white" /> Create Your Letter{" "}
+              <Settings2 className="w-4 h-4" />
+            </Button>
+            <Button
+              size="lg"
+              variant="outline"
+              className="border-slate-300 text-slate-700 hover:bg-white px-8 h-12 text-base font-semibold rounded-xl flex items-center gap-2 bg-white/60"
+              onClick={() => scrollTo("features")}
+            >
+              <FileText className="w-4 h-4" /> View FAQs{" "}
+              <ArrowRight className="w-4 h-4" />
+            </Button>
+          </div>
+
+          {/* Trust badges */}
+          <div className="flex flex-wrap justify-center gap-8 text-sm text-slate-600">
+            {[
+              { icon: CheckCircle2, label: "PDF Download" },
+              { icon: CheckCircle2, label: "Up to 48 hours turnaround" },
+              { icon: CheckCircle2, label: "Attorney approved" },
+            ].map((item) => (
+              <div key={item.label} className="flex items-center gap-2">
+                <item.icon className="w-4 h-4 text-green-500" />
+                <span className="font-medium">{item.label}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works */}
-      <section className="py-16 lg:py-20 bg-muted/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-3">How It Works</h2>
-            <p className="text-muted-foreground">From submission to final approved letter in 3 simple steps</p>
+      {/* How it works */}
+      <section id="features" className="py-24 px-4 bg-white">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-slate-900 mb-3">
+              How It Works
+            </h2>
+            <p className="text-slate-500 text-lg">
+              Simple, fast, and professionally verified in 3 steps
+            </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
-              { step: "01", icon: <FileText className="w-6 h-6 text-primary" />, title: "Submit Your Matter", desc: "Fill out our structured intake form with details about your legal situation, jurisdiction, and desired outcome." },
-              { step: "02", icon: <Zap className="w-6 h-6 text-primary" />, title: "AI Research & Draft", desc: "Our AI researches applicable laws and statutes for your jurisdiction, then drafts a professional letter." },
-              { step: "03", icon: <CheckCircle className="w-6 h-6 text-primary" />, title: "Attorney Review", desc: "A licensed attorney reviews, edits if needed, and approves your letter. You receive the final approved version." },
+              {
+                step: "01",
+                icon: FileText,
+                title: "Submit Your Case",
+                desc: "Fill out our simple intake form with your legal matter details. Choose from 5 professional letter types tailored to your situation.",
+              },
+              {
+                step: "02",
+                icon: Shield,
+                title: "AI Drafts Instantly",
+                desc: "Our advanced AI generates a professional, legally-sound letter tailored to your exact situation in seconds.",
+              },
+              {
+                step: "03",
+                icon: CheckCircle2,
+                title: "Attorney Approves",
+                desc: "A licensed attorney personally reviews, edits, and approves every letter before you receive it. Guaranteed quality.",
+              },
             ].map((item) => (
-              <div key={item.step} className="bg-card rounded-2xl p-6 border border-border relative overflow-hidden">
-                <div className="absolute top-4 right-4 text-4xl font-black text-muted/20">{item.step}</div>
-                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mb-4">{item.icon}</div>
-                <h3 className="font-bold text-foreground mb-2">{item.title}</h3>
-                <p className="text-sm text-muted-foreground leading-relaxed">{item.desc}</p>
+              <div
+                key={item.step}
+                className="bg-slate-50 rounded-2xl p-8 border border-slate-200 shadow-sm relative group hover:shadow-md transition-shadow"
+              >
+                <div className="absolute -top-4 -left-4 w-11 h-11 bg-blue-600 rounded-xl flex items-center justify-center shadow-lg">
+                  <span className="text-white text-sm font-bold">
+                    {item.step}
+                  </span>
+                </div>
+                <item.icon className="w-10 h-10 text-blue-600 mb-4" />
+                <h3 className="text-xl font-bold text-slate-900 mb-2">
+                  {item.title}
+                </h3>
+                <p className="text-slate-500 leading-relaxed text-sm">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -91,66 +231,212 @@ export default function Home() {
       </section>
 
       {/* Features */}
-      <section className="py-16 lg:py-20">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl font-bold text-foreground mb-6">Built for Security & Compliance</h2>
-              <div className="space-y-4">
-                {[
-                  { icon: <Shield className="w-5 h-5 text-primary" />, title: "Strict Data Isolation", desc: "Subscribers never see internal AI drafts or attorney work product." },
-                  { icon: <Clock className="w-5 h-5 text-primary" />, title: "Full Audit Trail", desc: "Every action is logged with timestamps for compliance." },
-                  { icon: <Users className="w-5 h-5 text-primary" />, title: "Role-Based Access", desc: "Three distinct portals for Subscribers, Attorneys, and Administrators." },
-                  { icon: <Star className="w-5 h-5 text-primary" />, title: "Attorney Reviewed", desc: "Every letter is reviewed and approved by a licensed attorney." },
-                ].map((feat) => (
-                  <div key={feat.title} className="flex gap-4">
-                    <div className="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center flex-shrink-0">{feat.icon}</div>
-                    <div><h4 className="font-semibold text-foreground mb-1">{feat.title}</h4><p className="text-sm text-muted-foreground">{feat.desc}</p></div>
-                  </div>
-                ))}
+      <section className="py-24 px-4 bg-slate-50">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-bold text-slate-900 mb-3">
+              Comprehensive Legal Tools
+            </h2>
+            <p className="text-slate-500 text-lg">
+              Everything you need to manage your legal matters
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="p-6 border border-slate-200 rounded-xl bg-white hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-4">
+                <FileText className="w-6 h-6 text-blue-600" />
               </div>
+              <h3 className="font-semibold text-slate-900 mb-2">
+                Document Management
+              </h3>
+              <p className="text-sm text-slate-600">
+                Upload, organize, and securely store all your legal documents
+                with version control and access tracking.
+              </p>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-6 space-y-3">
-              {[
-                { bg: "bg-blue-50", iconBg: "bg-blue-100", iconColor: "text-blue-600", label: "Submitted", badge: "New", badgeColor: "bg-blue-100 text-blue-700" },
-                { bg: "bg-purple-50", iconBg: "bg-purple-100", iconColor: "text-purple-600", label: "AI Drafting", badge: "In Progress", badgeColor: "bg-purple-100 text-purple-700" },
-                { bg: "bg-amber-50", iconBg: "bg-amber-100", iconColor: "text-amber-600", label: "Under Review", badge: "Review", badgeColor: "bg-amber-100 text-amber-700" },
-                { bg: "bg-green-50", iconBg: "bg-green-100", iconColor: "text-green-600", label: "Approved", badge: "Done", badgeColor: "bg-green-100 text-green-700" },
-              ].map((s) => (
-                <div key={s.label} className={`flex items-center gap-3 p-3 ${s.bg} rounded-xl`}>
-                  <div className={`w-8 h-8 ${s.iconBg} rounded-lg flex items-center justify-center`}>
-                    <FileText className={`w-4 h-4 ${s.iconColor}`} />
-                  </div>
-                  <div><p className="text-xs text-muted-foreground">Status</p><p className="text-sm font-semibold text-foreground">{s.label}</p></div>
-                  <div className="ml-auto"><span className={`text-xs ${s.badgeColor} px-2 py-0.5 rounded-full font-medium`}>{s.badge}</span></div>
-                </div>
-              ))}
+
+            <div className="p-6 border border-slate-200 rounded-xl bg-white hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
+                <Zap className="w-6 h-6 text-purple-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">
+                AI Document Analysis
+              </h3>
+              <p className="text-sm text-slate-600">
+                Get instant AI-powered insights and analysis of your legal
+                documents with key findings and recommendations.
+              </p>
+            </div>
+
+            <div className="p-6 border border-slate-200 rounded-xl bg-white hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-amber-100 rounded-lg flex items-center justify-center mb-4">
+                <Copy className="w-6 h-6 text-amber-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">
+                Template Library
+              </h3>
+              <p className="text-sm text-slate-600">
+                Access a curated library of professional legal templates tailored
+                to your jurisdiction and needs.
+              </p>
+            </div>
+
+            <div className="p-6 border border-slate-200 rounded-xl bg-white hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mb-4">
+                <Share2 className="w-6 h-6 text-green-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">
+                Secure Sharing
+              </h3>
+              <p className="text-sm text-slate-600">
+                Safely share documents with legal professionals with granular
+                access controls and expiring links.
+              </p>
+            </div>
+
+            <div className="p-6 border border-slate-200 rounded-xl bg-white hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-4">
+                <History className="w-6 h-6 text-red-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">
+                Version Control
+              </h3>
+              <p className="text-sm text-slate-600">
+                Track all changes, restore previous versions, and maintain a
+                complete audit trail of your documents.
+              </p>
+            </div>
+
+            <div className="p-6 border border-slate-200 rounded-xl bg-white hover:shadow-lg transition-shadow">
+              <div className="w-12 h-12 bg-indigo-100 rounded-lg flex items-center justify-center mb-4">
+                <Shield className="w-6 h-6 text-indigo-600" />
+              </div>
+              <h3 className="font-semibold text-slate-900 mb-2">
+                Bank-Level Security
+              </h3>
+              <p className="text-sm text-slate-600">
+                Your documents are encrypted and stored securely with full
+                compliance to data protection regulations.
+              </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="py-16 lg:py-20 bg-muted/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
-          <div className="bg-primary rounded-3xl p-10 lg:p-14">
-            <h2 className="text-3xl font-bold text-primary-foreground mb-4">Ready to Get Your Legal Letter?</h2>
-            <p className="text-primary-foreground/80 mb-8 text-lg">Professional legal letters, attorney-approved and ready to send.</p>
-            <Button asChild size="lg" variant="secondary" className="text-base px-10">
-              <a href={getLoginUrl()}>Start Your Letter <ArrowRight className="w-4 h-4 ml-2" /></a>
-            </Button>
+      {/* Pricing */}
+      <section
+        id="pricing"
+        className="py-24 px-4"
+        style={{
+          background: "linear-gradient(135deg, #eef2ff 0%, #dbeafe 100%)",
+        }}
+      >
+        <div className="max-w-5xl mx-auto text-center">
+          <h2 className="text-4xl font-bold text-slate-900 mb-4">
+            Simple, Transparent Pricing
+          </h2>
+          <p className="text-slate-600 text-lg mb-3">
+            Start with one letter or unlock unlimited access
+          </p>
+          <p className="text-blue-600 text-sm mb-12 font-semibold">
+            Have a referral code? Get 20% off any plan!
+          </p>
+          <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+            {[
+              {
+                plan: "Single Letter",
+                price: "$200",
+                desc: "One complete legal letter",
+                sub: "or $160 with referral code",
+                highlight: false,
+              },
+              {
+                plan: "Membership",
+                price: "$200/mo",
+                desc: "$50 per letter, unlimited",
+                sub: "or $160/mo with referral code",
+                highlight: true,
+              },
+              {
+                plan: "Annual",
+                price: "$2,000/yr",
+                desc: "48 letters per year",
+                sub: "or $1,600/yr with referral code",
+                highlight: false,
+              },
+            ].map((tier) => (
+              <div
+                key={tier.plan}
+                className={`rounded-2xl p-6 border ${
+                  tier.highlight
+                    ? "border-blue-500 bg-blue-600 text-white shadow-xl shadow-blue-200"
+                    : "border-slate-200 bg-white shadow-sm"
+                }`}
+              >
+                {tier.highlight && (
+                  <div className="text-blue-200 text-xs font-bold mb-2 tracking-widest">
+                    MOST POPULAR
+                  </div>
+                )}
+                <h3
+                  className={`font-bold text-lg mb-1 ${
+                    tier.highlight ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  {tier.plan}
+                </h3>
+                <div
+                  className={`text-3xl font-bold mb-1 ${
+                    tier.highlight ? "text-white" : "text-slate-900"
+                  }`}
+                >
+                  {tier.price}
+                </div>
+                <p
+                  className={`text-sm mb-1 ${
+                    tier.highlight ? "text-blue-100" : "text-slate-500"
+                  }`}
+                >
+                  {tier.desc}
+                </p>
+                <p
+                  className={`text-xs ${
+                    tier.highlight ? "text-blue-200" : "text-slate-400"
+                  }`}
+                >
+                  {tier.sub}
+                </p>
+              </div>
+            ))}
           </div>
+          <Button
+            size="lg"
+            className="mt-10 bg-blue-600 hover:bg-blue-700 text-white px-10 h-12 text-lg shadow-lg rounded-xl"
+            onClick={goToLogin}
+          >
+            Get Started Today <ArrowRight className="ml-2 w-5 h-5" />
+          </Button>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <Scale className="w-4 h-4 text-primary" />
-            <span className="text-sm font-semibold text-foreground">Talk to My Lawyer</span>
+      <footer className="bg-slate-900 py-8 px-4">
+        <div className="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <img
+              src={LOGO_URL}
+              alt="Talk to My Lawyer"
+              className="w-10 h-10 object-contain"
+            />
+            <span className="text-white font-semibold">
+              Talk to My Lawyer
+            </span>
           </div>
-          <p className="text-xs text-muted-foreground">&copy; {new Date().getFullYear()} Talk to My Lawyer. All rights reserved.</p>
+          <p className="text-slate-500 text-sm">
+            &copy; {new Date().getFullYear()} Talk to My Lawyer. Professional
+            legal letter services.
+          </p>
         </div>
       </footer>
     </div>

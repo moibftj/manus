@@ -262,3 +262,8 @@
 - [x] $200 fee for attorney review submission via Stripe
 - [x] Add 'Submit for Attorney Review' button at top of letter modal
 - [x] Ensure generated_locked status shows the draft preview correctly
+
+## Phase 27: Landing Page Redesign (Base44 Clone)
+- [x] Rewrite Home.tsx to match exact Base44 landing page design (colors, layout, components)
+- [x] Upload logo to S3 and reference it (using Supabase CDN URL directly)
+- [x] Verify landing page renders correctly (TS compiles clean, server running, HMR applied)
