@@ -22,16 +22,15 @@ describe("Letter unlock pricing", () => {
     expect(PLANS.per_letter.interval).toBe("one_time");
   });
 
-  it("monthly plan is $79/month with unlimited letters", () => {
-    expect(PLANS.monthly.price).toBe(7900);
-    expect(PLANS.monthly.lettersAllowed).toBe(-1);
-    expect(PLANS.monthly.interval).toBe("month");
+  it("starter plan is $499/month with 4 letters", () => {
+    expect(PLANS.starter.price).toBe(49900);
+    expect(PLANS.starter.lettersAllowed).toBe(4);
+    expect(PLANS.starter.interval).toBe("month");
   });
-
-  it("annual plan is $599/year with 50 letters", () => {
-    expect(PLANS.annual.price).toBe(59900);
-    expect(PLANS.annual.lettersAllowed).toBe(50);
-    expect(PLANS.annual.interval).toBe("year");
+  it("professional plan is $799/month with 8 letters", () => {
+    expect(PLANS.professional.price).toBe(79900);
+    expect(PLANS.professional.lettersAllowed).toBe(8);
+    expect(PLANS.professional.interval).toBe("month");
   });
 });
 
@@ -92,8 +91,8 @@ describe("canSubmitLetter", () => {
     expect(result.reason).toContain("subscription");
   });
 
-  it("returns allowed:true for unlimited plan", () => {
-    const result = canSubmitLetter("monthly", -1, 100, "active");
+  it("returns allowed:true when letters used < allowed (starter)", () => {
+    const result = canSubmitLetter("starter", 4, 2, "active");
     expect(result.allowed).toBe(true);
   });
 
@@ -103,8 +102,8 @@ describe("canSubmitLetter", () => {
     expect(result.reason).toContain("used all");
   });
 
-  it("returns allowed:true when letters used < allowed", () => {
-    const result = canSubmitLetter("annual", 50, 10, "active");
+  it("returns allowed:true when letters used < allowed (professional)", () => {
+    const result = canSubmitLetter("professional", 8, 3, "active");
     expect(result.allowed).toBe(true);
   });
 });

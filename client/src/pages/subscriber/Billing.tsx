@@ -18,7 +18,11 @@ import { Link, useLocation } from "wouter";
 import { useEffect } from "react";
 
 const PLAN_DISPLAY: Record<string, { name: string; color: string }> = {
-  per_letter: { name: "Pay Per Letter", color: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" },
+  per_letter: { name: "Pay Per Letter ($200)", color: "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200" },
+  free_trial_review: { name: "Trial Review ($50)", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200" },
+  starter: { name: "Starter ($499/mo)", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
+  professional: { name: "Professional ($799/mo)", color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" },
+  // Legacy plan names (kept for backward compatibility)
   monthly: { name: "Monthly Plan", color: "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200" },
   annual: { name: "Annual Plan", color: "bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200" },
 };

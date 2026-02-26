@@ -829,3 +829,20 @@
 - [x] My Letters page: show PDF Ready badge (green, Download icon) for approved letters with pdfUrl
 - [x] My Letters page: approved letters show green styling, FileCheck icon, and summary stats in header
 - [x] Write 14 Vitest tests for PDF generation, schema, approval flow, and My Letters UI (365/365 total passing, 0 TS errors)
+
+## Phase 67: Pricing Restructure
+- [x] Update stripe-products.ts: $50 trial review, $200 per-letter, $499/mo starter (4 letters), $799/mo professional (8 letters)
+- [x] Add TRIAL_REVIEW_PRICE_CENTS constant (5000 cents)
+- [x] Update pipeline.ts status note for generated_unlocked
+- [x] Replace sendForReview (free) with payTrialReview ($50 Stripe checkout)
+- [x] Update LetterDetail.tsx GeneratedUnlockedView to use payTrialReview with $50 CTA
+- [x] Update LetterPaywall.tsx with new pricing tiers (free trial $50, per-letter $200, starter $499/mo, professional $799/mo)
+- [x] Update Pricing.tsx with new plan cards
+- [x] Update FAQ.tsx pricing answers
+- [x] Update email.ts letter-ready CTA to reference $50
+- [x] Update stripeWebhook.ts for new plan names (starter/professional)
+- [x] Update Billing.tsx plan display names
+- [x] Apply DB migration: add starter, professional, free_trial_review to subscription_plan enum
+- [x] Write 33 Vitest tests for new pricing model
+- [x] Update stale phase26 and phase66 tests for new plan names
+- [x] 398/398 tests passing, 0 TypeScript errors

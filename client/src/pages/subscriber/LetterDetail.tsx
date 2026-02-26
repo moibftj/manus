@@ -22,15 +22,17 @@ const POLLING_STATUSES = ["submitted", "researching", "drafting", "pending_revie
  */
 function GeneratedUnlockedView({ letterId, draftContent }: { letterId: number; draftContent: string }) {
   const utils = trpc.useUtils();
-  const sendForReview = trpc.billing.sendForReview.useMutation({
-    onSuccess: () => {
-      toast.success("Letter submitted for review", {
-        description: "You'll receive an email when the review is complete.",
-        duration: 6000,
-      });
-      utils.letters.detail.invalidate({ id: letterId });
+  const payTrialReview = trpc.billing.payTrialReview.useMutation({
+    onSuccess: (data: any) => {
+      if (data?.url) {
+        toast.success("Redirecting to checkout", {
+          description: "Complete your $50 payment to submit for attorney review.",
+          duration: 4000,
+        });
+        window.open(data.url, "_blank");
+      }
     },
-    onError: (err: any) => toast.error("Submission failed", { description: err.message ?? "Please try again or contact support." }),
+    onError: (err: any) => toast.error("Checkout failed", { description: err.message ?? "Please try again or contact support." }),
   });
 
   return (
@@ -41,9 +43,9 @@ function GeneratedUnlockedView({ letterId, draftContent }: { letterId: number; d
           <div className="flex items-start gap-3">
             <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-green-800">Your First Letter Is Free!</p>
+              <p className="text-sm font-semibold text-green-800">Your First Letter Draft Is Ready!</p>
               <p className="text-sm text-green-700 mt-1">
-                Read your draft below. When you're ready, send it for attorney review at no charge.
+                Read your draft below. Submit for attorney review for just $50 — a licensed attorney will edit and approve it.
               </p>
             </div>
           </div>
@@ -78,16 +80,16 @@ function GeneratedUnlockedView({ letterId, draftContent }: { letterId: number; d
               </p>
             </div>
             <Button
-              onClick={() => sendForReview.mutate({ letterId })}
-              disabled={sendForReview.isPending}
+              onClick={() => payTrialReview.mutate({ letterId })}
+              disabled={payTrialReview.isPending}
               className="bg-primary hover:bg-primary/90 text-primary-foreground w-full sm:w-auto"
             >
-              {sendForReview.isPending ? (
-                "Sending..."
+              {payTrialReview.isPending ? (
+                "Preparing checkout..."
               ) : (
                 <>
                   <Send className="w-4 h-4 mr-2" />
-                  Send for Attorney Review — Free
+                  Submit for Attorney Review — $50
                 </>
               )}
             </Button>

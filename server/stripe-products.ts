@@ -2,16 +2,20 @@
  * Stripe Products & Pricing Configuration
  * Talk-to-My-Lawyer — Legal Letter Generation Platform
  *
- * Plans:
- *  per_letter  — $200 one-time per letter (pay-as-you-go)
- *  monthly     — $79/month unlimited letters
- *  annual      — $599/year (50 letters/year, ~$12/letter)
+ * Pricing model:
+ *  free_trial_review — $50 one-time: first-ever letter attorney review fee
+ *  per_letter        — $200 one-time: pay-as-you-go (post-trial)
+ *  starter           — $499/month: 4 letters/month, attorney review included
+ *  professional      — $799/month: 8 letters/month, attorney review included
  *
- * First letter is FREE — no payment required for the first attorney review.
+ * First letter draft is FREE to generate.
+ * Attorney review of the first draft costs $50.
+ * All subsequent letters require a subscription or $200 per-letter payment.
  */
 
 export interface PlanConfig {
-  id: "per_letter" | "monthly" | "annual";
+  id: "free_trial_review" | "per_letter" | "starter" | "professional";
+  isTrial?: boolean;
   name: string;
   description: string;
   price: number; // in cents
@@ -21,10 +25,28 @@ export interface PlanConfig {
   features: string[];
 }
 
-/** Price in cents for a single letter unlock (attorney review) */
+/** Price in cents for the free-trial attorney review ($50) */
+export const TRIAL_REVIEW_PRICE_CENTS = 5000; // $50
+
+/** Price in cents for a single pay-per-letter unlock ($200) */
 export const LETTER_UNLOCK_PRICE_CENTS = 20000; // $200
 
 export const PLANS: Record<string, PlanConfig> = {
+  free_trial_review: {
+    id: "free_trial_review",
+    name: "Free Trial Review",
+    description: "Attorney review of your first free draft",
+    price: TRIAL_REVIEW_PRICE_CENTS, // $50
+    interval: "one_time",
+    lettersAllowed: 0,
+    isTrial: true,
+    features: [
+      "Attorney review of your first draft",
+      "Professional edits & approval",
+      "Final approved PDF",
+      "Email delivery",
+    ],
+  },
   per_letter: {
     id: "per_letter",
     name: "Pay Per Letter",
@@ -34,45 +56,47 @@ export const PLANS: Record<string, PlanConfig> = {
     lettersAllowed: 1,
     features: [
       "1 professional legal letter",
-      "AI-powered research (Perplexity)",
+      "Legal research & drafting",
       "Attorney review & approval",
       "Final approved PDF",
       "Email delivery",
     ],
   },
-  monthly: {
-    id: "monthly",
-    name: "Monthly Plan",
-    description: "Unlimited letters for active legal needs",
-    price: 7900, // $79/month
+  starter: {
+    id: "starter",
+    name: "Starter",
+    description: "4 attorney-reviewed letters per month",
+    price: 49900, // $499/month
     interval: "month",
-    lettersAllowed: -1, // unlimited
+    lettersAllowed: 4,
     badge: "Most Popular",
     features: [
-      "Unlimited legal letters",
-      "Priority attorney review",
-      "AI-powered research (Perplexity)",
+      "4 professional legal letters/month",
+      "Attorney review included",
+      "Legal research & drafting",
       "All letter types supported",
+      "Final approved PDFs",
       "Email delivery",
       "Cancel anytime",
     ],
   },
-  annual: {
-    id: "annual",
-    name: "Annual Plan",
-    description: "Best value for ongoing legal protection",
-    price: 59900, // $599/year
-    interval: "year",
-    lettersAllowed: 50,
+  professional: {
+    id: "professional",
+    name: "Professional",
+    description: "8 attorney-reviewed letters per month",
+    price: 79900, // $799/month
+    interval: "month",
+    lettersAllowed: 8,
     badge: "Best Value",
     features: [
-      "50 legal letters per year",
+      "8 professional legal letters/month",
       "Priority attorney review",
-      "AI-powered research (Perplexity)",
+      "Legal research & drafting",
       "All letter types supported",
+      "Final approved PDFs",
       "Email delivery",
       "Dedicated support",
-      "Save 37% vs monthly",
+      "Save vs pay-per-letter",
     ],
   },
 };

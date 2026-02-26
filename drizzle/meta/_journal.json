@@ -50,6 +50,13 @@
       "when": 1772052964120,
       "tag": "0006_regular_pestilence",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1772136927208,
+      "tag": "0007_third_terrax",
+      "breakpoints": true
     }
   ]
 }

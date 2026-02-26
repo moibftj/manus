@@ -512,14 +512,14 @@ export async function sendLetterReadyEmail(opts: {
         <p style="margin:0;font-family:Inter,Arial,sans-serif;font-size:14px;color:#374151;"><strong>Letter ID:</strong> #${opts.letterId}</p>
       </td></tr>
     </table>
-    <p>To send your letter for licensed attorney review and final approval, click the button below to view your draft and complete the unlock payment.</p>
+    <p>Your first letter draft is <strong>completely free to read</strong>. When you're ready, submit it for licensed attorney review for just <strong>$50</strong>. The attorney will review, edit if needed, and approve your final letter.</p>
     <p style="font-size:13px;color:#6B7280;">Attorney review ensures your letter is legally sound and professionally formatted before it's sent.</p>
   `;
   const html = buildEmailHtml({
-    preheader: `Your AI-drafted letter is ready — unlock it for attorney review.`,
+    preheader: `Your free AI-drafted letter is ready — submit for attorney review ($50).`,
     title: "Your Letter Draft Is Ready 🎉",
     body,
-    ctaText: "View & Unlock Your Letter — $29",
+    ctaText: "View Draft & Submit for Review — $50",
     ctaUrl,
     accentColor: "#059669", // green — ready / positive action
   });

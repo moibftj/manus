@@ -464,8 +464,8 @@ export async function runAssemblyStage(
       noteText: isSubscriber
         ? `3-stage pipeline complete. Research (Perplexity) → Draft (Anthropic) → Final Assembly (Anthropic). Letter automatically queued for attorney review (active subscription).`
         : finalStatus === "generated_unlocked"
-        ? `3-stage pipeline complete. Your first AI draft is ready to read! Send it for attorney review when you're ready.`
-        : `3-stage pipeline complete. Research (Perplexity) → Draft (Anthropic) → Final Assembly (Anthropic). Your letter is ready — unlock it to send for attorney review.`,
+        ? `3-stage pipeline complete. Your first AI draft is ready to read! Submit it for attorney review for $50.`
+        : `3-stage pipeline complete. Research (Perplexity) → Draft (Anthropic) → Final Assembly (Anthropic). Your letter is ready — pay $200 to send for attorney review.`,
       noteVisibility: "user_visible",
       fromStatus: "drafting",
       toStatus: finalStatus,

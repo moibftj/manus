@@ -193,8 +193,8 @@ describe("approval flow", () => {
     );
     // freeUnlock transitions to pending_review
     expect(routersSource).toContain('"pending_review"');
-    // sendForReview transitions to pending_review
-    expect(routersSource).toContain("sendForReview");
+    // payTrialReview transitions to pending_review (replaced sendForReview in Phase 67)
+    expect(routersSource).toContain("payTrialReview");
     // approve requires under_review status
     expect(routersSource).toContain("Letter must be under_review to approve");
   });

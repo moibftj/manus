@@ -1,16 +1,16 @@
 /**
  * LetterPaywall — shown when a letter is in `generated_locked` status.
  *
- * Three paywall states (from billing.checkPaywallStatus):
- *   - "free"           → first letter is FREE, auto-transitions to pending_review
- *   - "subscribed"     → active monthly/annual plan (bypass paywall, graceful fallback)
- *   - "pay_per_letter" → free letter already used, no active subscription
- *                        → shows SUBSCRIPTION UPSELL prominently + $200 as secondary option
+ * Pricing model:
+ *   - "free_trial_review" → first letter draft is ready, pay $50 for attorney review
+ *   - "subscribed"        → active starter/professional plan (bypass paywall, graceful fallback)
+ *   - "pay_per_letter"    → free trial already used, no active subscription
+ *                           → shows SUBSCRIPTION UPSELL prominently + $200 as secondary option
  */
 import { useState } from "react";
 import {
   Lock, Sparkles, CheckCircle, ArrowRight, Shield, Clock,
-  FileText, Eye, EyeOff, Gavel, Gift, Star, Zap, CreditCard,
+  FileText, Eye, EyeOff, Gavel, Star, Zap, CreditCard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -38,12 +38,12 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
   const [isRedirecting, setIsRedirecting] = useState(false);
   const [showFullPreview, setShowFullPreview] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [confirmMode, setConfirmMode] = useState<"free" | "pay_per_letter">("free");
+  const [confirmMode, setConfirmMode] = useState<"trial" | "pay_per_letter">("trial");
 
   // Unified paywall status query
   const { data: paywallStatus, isLoading: paywallLoading } = trpc.billing.checkPaywallStatus.useQuery();
   const state = paywallStatus?.state ?? "pay_per_letter";
-  const isFirstLetterFree = state === "free";
+  const isTrialReview = state === "free"; // first letter — pay $50 for review
   const isSubscribed = state === "subscribed";
   const isPayPerLetter = state === "pay_per_letter";
 
@@ -51,18 +51,19 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
   const subscribeCheckout = trpc.billing.createCheckout.useMutation({
     onSuccess: (data) => {
       toast.info("Opening secure checkout", { description: "You'll be redirected to Stripe to complete your payment." });
-      window.location.href = data.url;
+      window.open(data.url, "_blank");
     },
     onError: (err) => {
       toast.error("Unable to start checkout", { description: err.message || "Please try again or contact support." });
     },
   });
 
+  // $200 pay-per-letter checkout (generated_locked letters)
   const payToUnlock = trpc.billing.payToUnlock.useMutation({
     onSuccess: (data) => {
       if (data.url) {
         setIsRedirecting(true);
-        window.location.href = data.url;
+        window.open(data.url, "_blank");
       }
     },
     onError: (err) => {
@@ -71,6 +72,9 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
     },
   });
 
+  // $50 trial review checkout (generated_locked letters where user has used free trial)
+  // Note: for generated_unlocked letters, payTrialReview is used directly in GeneratedUnlockedView
+  // This freeUnlock is kept for the "subscribed" graceful fallback path
   const freeUnlock = trpc.billing.freeUnlock.useMutation({
     onSuccess: () => {
       toast.success("Letter submitted for attorney review", {
@@ -84,8 +88,8 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
     },
   });
 
-  const handleFreeSubmit = () => {
-    setConfirmMode("free");
+  const handleTrialReviewSubmit = () => {
+    setConfirmMode("trial");
     setShowConfirmDialog(true);
   };
 
@@ -100,8 +104,10 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
 
   const handleConfirm = () => {
     setShowConfirmDialog(false);
-    if (confirmMode === "free") {
-      freeUnlock.mutate({ letterId });
+    if (confirmMode === "trial") {
+      // For generated_locked + trial state, use payToUnlock with trial price
+      // (The payTrialReview procedure handles generated_unlocked letters)
+      payToUnlock.mutate({ letterId });
     } else {
       payToUnlock.mutate({ letterId });
     }
@@ -118,23 +124,23 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
   return (
     <div className="space-y-5">
 
-      {/* ── FREE FIRST LETTER CTA ── */}
-      {isFirstLetterFree && !paywallLoading && (
+      {/* ── TRIAL REVIEW: $50 attorney review for first-letter users ── */}
+      {isTrialReview && !paywallLoading && (
         <div className="bg-gradient-to-r from-emerald-600 to-teal-600 rounded-2xl p-5 text-white shadow-lg">
           <div className="flex items-start gap-4">
             <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center flex-shrink-0">
-              <Gift className="w-6 h-6 text-white" />
+              <Gavel className="w-6 h-6 text-white" />
             </div>
             <div className="flex-1 min-w-0">
-              <h2 className="text-lg font-bold">Your First Letter Review is FREE!</h2>
+              <h2 className="text-lg font-bold">Submit for Attorney Review — $50</h2>
               <p className="text-sm text-white/80 mt-1">
-                A licensed attorney will review, edit if needed, and approve your letter at no cost.
+                Your first draft is ready. A licensed attorney will review, edit if needed, and approve your letter.
               </p>
             </div>
           </div>
-          <div className="mt-4">
+          <div className="mt-4 flex flex-col sm:flex-row gap-3">
             <Button
-              onClick={handleFreeSubmit}
+              onClick={handleTrialReviewSubmit}
               disabled={isPending}
               size="lg"
               className="bg-white text-emerald-700 hover:bg-white/90 font-bold shadow-md w-full sm:w-auto"
@@ -146,12 +152,13 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
                 </span>
               ) : (
                 <span className="flex items-center gap-2">
-                  <Gift className="w-4 h-4" />
-                  Submit for Free Attorney Review
+                  <Gavel className="w-4 h-4" />
+                  Pay $50 for Attorney Review
                   <ArrowRight className="w-4 h-4" />
                 </span>
               )}
             </Button>
+            <p className="text-xs text-white/60 self-center">Or subscribe for ongoing access below</p>
           </div>
         </div>
       )}
@@ -171,27 +178,27 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
                   <Badge className="bg-yellow-400 text-yellow-900 text-xs font-bold border-0">BEST VALUE</Badge>
                 </div>
                 <p className="text-sm text-white/80">
-                  You’ve used your free letter. Subscribe to get unlimited attorney-reviewed letters — no per-letter fees.
+                  You've used your free trial. Subscribe to get attorney-reviewed letters every month — no per-letter fees.
                 </p>
               </div>
             </div>
             {/* Plan comparison */}
             <div className="mt-4 grid grid-cols-2 gap-3">
-              {/* Monthly plan */}
+              {/* Starter plan */}
               <div className="bg-white/10 rounded-xl p-3 border border-white/20">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-bold">Monthly</span>
+                  <span className="text-sm font-bold">Starter</span>
                   <Badge className="bg-blue-300 text-blue-900 text-xs border-0">Popular</Badge>
                 </div>
-                <p className="text-2xl font-black">$79<span className="text-sm font-normal text-white/70">/mo</span></p>
-                <p className="text-xs text-white/70 mt-0.5">Unlimited letters</p>
+                <p className="text-2xl font-black">$499<span className="text-sm font-normal text-white/70">/mo</span></p>
+                <p className="text-xs text-white/70 mt-0.5">4 letters/month</p>
                 <Button
-                  onClick={() => handleSubscribe("monthly")}
+                  onClick={() => handleSubscribe("starter")}
                   disabled={isPending}
                   size="sm"
                   className="w-full mt-3 bg-white text-blue-700 hover:bg-white/90 font-bold text-xs"
                 >
-                  {subscribeCheckout.isPending && subscribeCheckout.variables?.planId === "monthly" ? (
+                  {subscribeCheckout.isPending && subscribeCheckout.variables?.planId === "starter" ? (
                     <span className="flex items-center gap-1">
                       <div className="w-3 h-3 border-2 border-blue-300 border-t-blue-700 rounded-full animate-spin" />
                       Loading...
@@ -199,26 +206,26 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
                   ) : (
                     <span className="flex items-center gap-1">
                       <Zap className="w-3 h-3" />
-                      Subscribe Monthly
+                      Subscribe Starter
                     </span>
                   )}
                 </Button>
               </div>
-              {/* Annual plan */}
+              {/* Professional plan */}
               <div className="bg-white/10 rounded-xl p-3 border border-white/20">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-bold">Annual</span>
-                  <Badge className="bg-yellow-400 text-yellow-900 text-xs border-0">Save 37%</Badge>
+                  <span className="text-sm font-bold">Professional</span>
+                  <Badge className="bg-yellow-400 text-yellow-900 text-xs border-0">Best Value</Badge>
                 </div>
-                <p className="text-2xl font-black">$599<span className="text-sm font-normal text-white/70">/yr</span></p>
-                <p className="text-xs text-white/70 mt-0.5">50 letters/year</p>
+                <p className="text-2xl font-black">$799<span className="text-sm font-normal text-white/70">/mo</span></p>
+                <p className="text-xs text-white/70 mt-0.5">8 letters/month</p>
                 <Button
-                  onClick={() => handleSubscribe("annual")}
+                  onClick={() => handleSubscribe("professional")}
                   disabled={isPending}
                   size="sm"
                   className="w-full mt-3 bg-yellow-400 text-yellow-900 hover:bg-yellow-300 font-bold text-xs"
                 >
-                  {subscribeCheckout.isPending && subscribeCheckout.variables?.planId === "annual" ? (
+                  {subscribeCheckout.isPending && subscribeCheckout.variables?.planId === "professional" ? (
                     <span className="flex items-center gap-1">
                       <div className="w-3 h-3 border-2 border-yellow-600 border-t-yellow-900 rounded-full animate-spin" />
                       Loading...
@@ -226,20 +233,20 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
                   ) : (
                     <span className="flex items-center gap-1">
                       <Star className="w-3 h-3" />
-                      Subscribe Annual
+                      Subscribe Professional
                     </span>
                   )}
                 </Button>
               </div>
             </div>
             <p className="text-xs text-white/50 mt-3 text-center">
-              Subscriptions include priority attorney review · Cancel anytime
+              All plans include attorney review · Cancel anytime
             </p>
           </div>
           {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="flex-1 h-px bg-border" />
-            <span className="text-xs text-muted-foreground font-medium">or pay per letter</span>
+            <span className="text-xs text-muted-foreground">or pay per letter</span>
             <div className="flex-1 h-px bg-border" />
           </div>
           {/* Per-letter $200 option — SECONDARY */}
@@ -296,7 +303,7 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
           </div>
           <div className="mt-4">
             <Button
-              onClick={handleFreeSubmit}
+              onClick={() => freeUnlock.mutate({ letterId })}
               disabled={isPending}
               size="lg"
               className="bg-white text-emerald-700 hover:bg-white/90 font-bold shadow-md w-full sm:w-auto"
@@ -332,7 +339,7 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
           <Sparkles className="w-5 h-5 text-amber-600" />
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-amber-900">AI Research & Drafting Complete</p>
+          <p className="text-sm font-semibold text-amber-900">AI Research &amp; Drafting Complete</p>
           <p className="text-xs text-amber-700 mt-0.5">
             Our AI completed a 3-stage legal research and drafting process. Review the draft below, then submit for attorney review.
           </p>
@@ -452,7 +459,7 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
                 color: "text-emerald-600",
                 bg: "bg-emerald-50",
                 title: "Download Your Final Letter",
-                desc: "Access and download your attorney-approved professional legal letter.",
+                desc: "Access and download your attorney-approved professional legal letter as a PDF.",
               },
             ].map((step, i) => (
               <div key={i} className="flex items-start gap-3">
@@ -490,12 +497,13 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Gavel className="w-5 h-5 text-emerald-600" />
-              {confirmMode === "free" ? "Submit for Free Attorney Review" : "Submit for Attorney Review — $200"}
+              {confirmMode === "trial" ? "Submit for Attorney Review — $50" : "Submit for Attorney Review — $200"}
             </DialogTitle>
             <DialogDescription>
-              {confirmMode === "free" ? (
+              {confirmMode === "trial" ? (
                 <>
-                  Your first letter review is <strong>free</strong>. A licensed attorney will review and approve your letter within 24–48 hours.
+                  You will be redirected to Stripe to complete a <strong>$50</strong> one-time payment.
+                  A licensed attorney will review and approve your letter within 24–48 hours.
                 </>
               ) : (
                 <>
@@ -505,7 +513,7 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
               )}
             </DialogDescription>
           </DialogHeader>
-          <div className="bg-muted/50 rounded-lg p-3 space-y-1.5">
+          <div className="space-y-2 border border-border/50 rounded-lg p-3 text-sm bg-muted/20">
             <div className="flex justify-between text-sm">
               <span className="text-muted-foreground">Letter type</span>
               <span className="font-medium text-foreground capitalize">{letterType.replace(/-/g, " ")}</span>
@@ -517,11 +525,7 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
             <div className="flex justify-between text-sm border-t border-border/50 pt-1.5 mt-1.5">
               <span className="text-muted-foreground font-semibold">Total</span>
               <span className="font-bold text-foreground">
-                {confirmMode === "free" ? (
-                  <span className="text-emerald-600">FREE</span>
-                ) : (
-                  "$200.00"
-                )}
+                {confirmMode === "trial" ? "$50.00" : "$200.00"}
               </span>
             </div>
           </div>
@@ -532,18 +536,13 @@ export function LetterPaywall({ letterId, letterType, subject, draftContent }: L
             <Button
               onClick={handleConfirm}
               disabled={isPending}
-              className={confirmMode === "free"
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white"
-                : "bg-primary hover:bg-primary/90"
-              }
+              className="bg-primary hover:bg-primary/90"
             >
               {isPending ? (
                 <span className="flex items-center gap-2">
                   <div className="w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" />
                   Processing...
                 </span>
-              ) : confirmMode === "free" ? (
-                "Submit for Free"
               ) : (
                 "Proceed to Payment"
               )}

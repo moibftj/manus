@@ -187,7 +187,7 @@ export async function stripeWebhookHandler(req: Request, res: Response): Promise
           break;
         }
 
-        const planId = sub.metadata?.plan_id ?? "monthly";
+        const planId = sub.metadata?.plan_id ?? "starter";
         const status = mapStripeStatus(sub.status);
 
         await activateSubscription({
@@ -215,7 +215,7 @@ export async function stripeWebhookHandler(req: Request, res: Response): Promise
 
         if (!userId) break;
 
-        const planId = sub.metadata?.plan_id ?? "monthly";
+        const planId = sub.metadata?.plan_id ?? "starter";
 
         await activateSubscription({
           userId,
@@ -248,7 +248,7 @@ export async function stripeWebhookHandler(req: Request, res: Response): Promise
           const userId = resolvedUserId || (await getUserIdFromStripeCustomer(customerId)) || 0;
 
           if (userId) {
-            const planId = sub.metadata?.plan_id ?? "monthly";
+            const planId = sub.metadata?.plan_id ?? "starter";
             await activateSubscription({
               userId,
               stripeCustomerId: customerId,

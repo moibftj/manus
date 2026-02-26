@@ -76,6 +76,7 @@ import {
   createCheckoutSession,
   createBillingPortalSession,
   createLetterUnlockCheckout,
+  createTrialReviewCheckout,
   getUserSubscription,
   checkLetterSubmissionAllowed,
   hasActiveRecurringSubscription,
@@ -861,49 +862,26 @@ export const appRouter = router({
         return { success: true, free: true };
       }),
 
-    // ─── Send for Review: generated_unlocked → pending_review (first-letter-free path) ───
-    sendForReview: subscriberProcedure
-      .input(z.object({ letterId: z.number() }))
+     // ─── Pay Trial Review: generated_unlocked → Stripe $50 checkout for first-letter attorney review ───
+    payTrialReview: subscriberProcedure
+      .input(z.object({ letterId: z.number(), discountCode: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
+        // Rate limit: 10 payment attempts per hour per user
+        await checkTrpcRateLimit("payment", `user:${ctx.user.id}`);
         const letter = await getLetterRequestSafeForSubscriber(input.letterId, ctx.user.id);
         if (!letter) throw new TRPCError({ code: "NOT_FOUND", message: "Letter not found" });
         if (letter.status !== "generated_unlocked")
           throw new TRPCError({ code: "BAD_REQUEST", message: "Letter is not in generated_unlocked status" });
-
-        // Transition to pending_review
-        await updateLetterStatus(input.letterId, "pending_review");
-        await logReviewAction({
-          letterRequestId: input.letterId,
-          reviewerId: ctx.user.id,
-          actorType: "subscriber",
-          action: "subscriber_sent_for_review",
-          noteText: "Subscriber sent their first free letter for attorney review.",
-          noteVisibility: "user_visible",
-          fromStatus: "generated_unlocked",
-          toStatus: "pending_review",
+        const origin = getAppUrl(ctx.req);
+        const result = await createTrialReviewCheckout({
+          userId: ctx.user.id,
+          email: ctx.user.email ?? "",
+          name: ctx.user.name,
+          letterId: input.letterId,
+          origin,
+          discountCode: input.discountCode,
         });
-
-        // Send notification emails
-        try {
-          await sendLetterUnlockedEmail({
-            to: ctx.user.email ?? "",
-            name: ctx.user.name ?? "Subscriber",
-            subject: letter.subject,
-            letterId: input.letterId,
-            appUrl: getAppUrl(ctx.req),
-          });
-          await sendNewReviewNeededEmail({
-            to: "",
-            name: "Attorney Team",
-            letterSubject: letter.subject,
-            letterId: input.letterId,
-            letterType: letter.letterType,
-            jurisdiction: letter.jurisdictionState ?? "Unknown",
-            appUrl: getAppUrl(ctx.req),
-          });
-        } catch (e) { console.error("[sendForReview] Email error:", e); }
-
-        return { success: true };
+        return result;
       }),
 
     // ─── Payment History: fetch from Stripe ───
