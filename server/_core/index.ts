@@ -13,6 +13,10 @@ import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { getDb } from "../db";
+import {
+  authRateLimitMiddleware,
+  generalRateLimitMiddleware,
+} from "../rateLimiter";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -41,6 +45,16 @@ async function startServer() {
   // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "50mb" }));
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+  // ─── Rate Limiting ──────────────────────────────────────────────────────────
+  // Auth endpoints: 10 req / 15 min per IP (protects against brute force)
+  app.use("/api/auth/login", authRateLimitMiddleware);
+  app.use("/api/auth/signup", authRateLimitMiddleware);
+  app.use("/api/auth/forgot-password", authRateLimitMiddleware);
+  // tRPC API: 60 req / 1 min per IP (broad abuse guard)
+  app.use("/api/trpc", generalRateLimitMiddleware);
+  // ───────────────────────────────────────────────────────────────────────────
+
   // Supabase Auth routes (signup, login, logout, refresh, forgot-password, reset-password)
   registerSupabaseAuthRoutes(app);
   // Legacy Manus OAuth callback (kept for backward compatibility)

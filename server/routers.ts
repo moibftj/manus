@@ -1,5 +1,6 @@
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import { checkTrpcRateLimit } from "./rateLimiter";
 import { COOKIE_NAME } from "@shared/const";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
@@ -194,6 +195,8 @@ export const appRouter = router({
         priority: z.enum(["low", "normal", "high", "urgent"]).default("normal"),
       }))
       .mutation(async ({ ctx, input }) => {
+        // Rate limit: 5 letter submissions per hour per user
+        await checkTrpcRateLimit("letter", `user:${ctx.user.id}`);
         const result = await createLetterRequest({
           userId: ctx.user.id,
           letterType: input.letterType,
@@ -737,6 +740,8 @@ export const appRouter = router({
     createCheckout: protectedProcedure
       .input(z.object({ planId: z.string() }))
       .mutation(async ({ ctx, input }) => {
+        // Rate limit: 10 checkout attempts per hour per user
+        await checkTrpcRateLimit("payment", `user:${ctx.user.id}`);
         const result = await createCheckoutSession({
           userId: ctx.user.id,
           email: ctx.user.email ?? "",
@@ -957,6 +962,8 @@ export const appRouter = router({
     payToUnlock: subscriberProcedure
       .input(z.object({ letterId: z.number(), discountCode: z.string().optional() }))
       .mutation(async ({ ctx, input }) => {
+        // Rate limit: 10 payment attempts per hour per user
+        await checkTrpcRateLimit("payment", `user:${ctx.user.id}`);
         // Verify the letter belongs to this subscriber and is in generated_locked status
         const letter = await getLetterRequestSafeForSubscriber(input.letterId, ctx.user.id);
         if (!letter) throw new TRPCError({ code: "NOT_FOUND", message: "Letter not found" });

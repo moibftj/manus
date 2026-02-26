@@ -775,3 +775,14 @@
 - [x] Remove all AI references from index.html meta tags (title, description, og, twitter)
 - [x] Update meta descriptions to reflect freemium model ('your first letter is free')
 - [x] Remove 'AI legal' from keywords, add 'free legal letter'
+
+## Phase 63: Upstash Redis Rate Limiting
+- [x] Add UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN as secrets
+- [x] Install @upstash/ratelimit and @upstash/redis packages
+- [x] Create server/rateLimiter.ts with per-endpoint limits
+- [x] Apply rate limiting to auth endpoints (10 req/15 min per IP)
+- [x] Apply rate limiting to letters.submit (5 req/hour per user)
+- [x] Apply rate limiting to billing endpoints (10 req/hour per user)
+- [x] Apply global tRPC fallback (60 req/min per IP)
+- [x] Write 9 Vitest tests (credentials, PONG, allow/block, graceful degradation)
+- [x] All 330/330 tests passing, 0 TypeScript errors
