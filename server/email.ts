@@ -6,7 +6,14 @@
 
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy-init: do NOT construct at module load time — undefined key throws and crashes test imports
+let _resend: Resend | null = null;
+function getResend(): Resend {
+  if (!_resend) {
+    _resend = new Resend(process.env.RESEND_API_KEY);
+  }
+  return _resend;
+}
 const FROM = process.env.RESEND_FROM_EMAIL ?? "noreply@resend.dev";
 const APP_NAME = "Talk to My Lawyer";
 const BRAND_COLOR = "#2563EB"; // blue-600
@@ -181,7 +188,7 @@ async function sendEmail(opts: {
   text: string;
 }): Promise<void> {
   try {
-    const { error } = await resend.emails.send({
+    const { error } = await getResend().emails.send({
       from: FROM,
       to: opts.to,
       subject: opts.subject,
@@ -422,7 +429,8 @@ export async function sendStatusUpdateEmail(opts: {
 /** Validate Resend credentials (used in tests) */
 export async function validateResendCredentials(): Promise<boolean> {
   try {
-    const { data, error } = await resend.domains.list();
+    const r = getResend();
+    const { data, error } = await r.domains.list();
     return !error;
   } catch {
     return false;

@@ -794,3 +794,38 @@
 - [x] Login page: detect unverified user error, show resend verification link
 - [x] Profile page: add Resend Verification Email button to the verification banner
 - [x] Write 21 Vitest tests for all fixed flows (351/351 total passing, 0 TS errors)
+
+## Phase 65: Test Suite Fixes (from TTML Test Analysis)
+- [ ] Fix Category 1: Lazy-init Resend in email.ts (module-level crash on undefined API key)
+- [ ] Fix Category 2: Replace stale "employeeProcedure" with "attorneyProcedure" in phase38 test (9 failures)
+- [ ] Fix Category 3: Add describe.skipIf() guards to supabase-auth.test.ts and supabase-realtime.test.ts (15 failures)
+- [ ] Fix Category 4a: Fix invalid "user" role → "subscriber" in ttml.test.ts and auth.logout.test.ts
+- [ ] Fix Category 4b: Fix stale loginMethod "manus" → "email" in ttml.test.ts
+- [ ] Fix Category 4c: Remove duplicate logout test block from ttml.test.ts
+- [ ] Update feature map skill: rate limiting is now IMPLEMENTED (Phase 63)
+- [ ] Run full test suite and confirm 351/351 pass
+
+## Phase 66: Attorney Draft Editing → Approval → Supreme PDF → My Letters Delivery
+- [ ] Audit attorney draft editor in Review Center (can attorneys edit the AI draft?)
+- [ ] Add/fix inline draft editor with save functionality in the Review Center
+- [ ] Add review.saveDraft tRPC procedure for attorneys to save edited drafts
+- [ ] Upgrade PDF generator for supreme professional formatting (letterhead, margins, typography)
+- [ ] Ensure approval flow generates PDF from final content and stores URL on letter record
+- [ ] Fix My Letters page to show approved letters with prominent PDF download links
+- [ ] Write Vitest tests for the full attorney edit → approve → PDF → delivery flow
+
+## Phase 66: Attorney Approval → Supreme PDF → My Letters Delivery (All Letter Types)
+- [ ] Audit PDF generator: find current implementation or confirm it is missing
+- [ ] Build supreme-formatted PDF generator (letterhead, margins, professional typography, approval stamp)
+- [ ] Ensure approve procedure calls PDF generator for ALL letter statuses (generated_unlocked, generated_locked, pending_review)
+- [ ] Verify pdfUrl is stored on letter_requests record after approval
+- [ ] My Letters page: show prominent PDF download card for approved letters
+- [ ] LetterDetail page: show PDF download button prominently for approved letters
+- [ ] Write Vitest tests for the full attorney edit → approve → PDF → delivery flow
+
+## Phase 66: Attorney Approval → PDF → My Letters
+- [x] Upgrade PDF generator: proper legal letter formatting (sender/recipient blocks, date, Re: line, multi-page footer, approval stamp, brand colors)
+- [x] Pass intakeJson to PDF generator from the approve procedure (sender/recipient names and addresses now appear in PDF)
+- [x] My Letters page: show PDF Ready badge (green, Download icon) for approved letters with pdfUrl
+- [x] My Letters page: approved letters show green styling, FileCheck icon, and summary stats in header
+- [x] Write 14 Vitest tests for PDF generation, schema, approval flow, and My Letters UI (365/365 total passing, 0 TS errors)

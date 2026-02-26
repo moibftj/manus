@@ -498,6 +498,7 @@ export const appRouter = router({
             approvedAt: new Date().toISOString(),
             jurisdictionState: letter.jurisdictionState,
             jurisdictionCountry: letter.jurisdictionCountry,
+            intakeJson: letter.intakeJson as any,
           });
           pdfUrl = pdfResult.pdfUrl;
           await updateLetterPdfUrl(input.letterId, pdfUrl);
