@@ -8,7 +8,7 @@ import { ENV } from "./_core/env";
 import { getDb, countCompletedLetters } from "./db";
 import { subscriptions } from "../drizzle/schema";
 import { eq, and } from "drizzle-orm";
-import { PLANS, getPlanConfig, LETTER_UNLOCK_PRICE_CENTS, TRIAL_REVIEW_PRICE_CENTS } from "./stripe-products";
+import { PLANS, getPlanConfig, LETTER_UNLOCK_PRICE_CENTS, MONTHLY_BASIC_PRICE_CENTS, MONTHLY_PRO_PRICE_CENTS } from "./stripe-products";
 
 // ─── Stripe Client ───────────────────────────────────────────────────────────
 let _stripe: Stripe | null = null;
@@ -301,15 +301,22 @@ export async function hasActiveRecurringSubscription(userId: number): Promise<bo
   const sub = await getUserSubscription(userId);
   if (!sub) return false;
   if (sub.status !== "active") return false;
-  // per_letter and free_trial_review are one-time payments, not recurring subscriptions
-  return sub.plan === "starter" || sub.plan === "professional";
+  // per_letter and free_trial are one-time, not recurring subscriptions
+  // Support both new plan IDs and legacy aliases
+  return [
+    "monthly_basic",
+    "monthly_pro",
+    "starter",       // legacy alias for monthly_basic
+    "professional",  // legacy alias for monthly_pro
+  ].includes(sub.plan);
 }
 
-// ─── Create Trial Review Checkout ($50 for first-letter attorney review) ────────
+// ─── Create Trial Review Checkout (DEPRECATED — first letter is now fully free) ────────
 /**
- * Creates a one-time $50 Stripe Checkout session for the first-ever letter's
- * attorney review. The letter_id is stored in session metadata so the webhook
- * can transition it to pending_review after payment.
+ * @deprecated The first letter is now completely free (no $50 trial review fee).
+ * This function is kept for backward compatibility with any existing webhook
+ * events that may reference the old free_trial_review plan.
+ * New code should NOT call this function.
  */
 export async function createTrialReviewCheckout(params: {
   userId: number;
@@ -319,51 +326,9 @@ export async function createTrialReviewCheckout(params: {
   origin: string;
   discountCode?: string;
 }): Promise<{ url: string; sessionId: string }> {
-  const { userId, email, name, letterId, origin, discountCode } = params;
-  const stripe = getStripe();
-  const customerId = await getOrCreateStripeCustomer(userId, email, name);
-  const session = await stripe.checkout.sessions.create({
-    customer: customerId,
-    client_reference_id: userId.toString(),
-    mode: "payment",
-    payment_method_types: ["card"],
-    allow_promotion_codes: true,
-    metadata: {
-      user_id: userId.toString(),
-      plan_id: "free_trial_review",
-      letter_id: letterId.toString(),
-      unlock_type: "trial_review",
-      customer_email: email,
-      customer_name: name ?? "",
-      ...(discountCode ? { discount_code: discountCode } : {}),
-    },
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "Attorney Review — First Letter ($50)",
-            description: "Submit your first draft for licensed attorney review, professional edits, and final approval.",
-            metadata: { plan_id: "free_trial_review", letter_id: letterId.toString() },
-          },
-          unit_amount: TRIAL_REVIEW_PRICE_CENTS, // $50
-        },
-        quantity: 1,
-      },
-    ],
-    payment_intent_data: {
-      metadata: {
-        user_id: userId.toString(),
-        plan_id: "free_trial_review",
-        letter_id: letterId.toString(),
-        unlock_type: "trial_review",
-      },
-    },
-    success_url: `${origin}/subscriber/letters/${letterId}?unlocked=true`,
-    cancel_url: `${origin}/subscriber/letters/${letterId}?canceled=true`,
-  });
-  if (!session.url) throw new Error("Stripe did not return a checkout URL");
-  return { url: session.url, sessionId: session.id };
+  console.warn("[Stripe] createTrialReviewCheckout is deprecated — first letter is now free");
+  // Redirect to the letter unlock checkout instead (which handles free-trial letters)
+  return createLetterUnlockCheckout({ ...params });
 }
 
 // ─── Create Letter Unlock Checkout (pay-to-unlock paywall) ───────────────────

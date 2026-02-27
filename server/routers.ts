@@ -106,9 +106,12 @@ const subscriberProcedure = protectedProcedure.use(({ ctx, next }) => {
 });
 
 function getAppUrl(req: { protocol: string; headers: Record<string, string | string[] | undefined> }): string {
-  const host = req.headers["x-forwarded-host"] ?? req.headers.host ?? "localhost:3000";
-  const proto = req.headers["x-forwarded-proto"] ?? req.protocol ?? "https";
-  return `${proto}://${host}`;
+  const host = req.headers["x-forwarded-host"] ?? req.headers.host;
+  if (host && !String(host).includes("localhost")) {
+    const proto = req.headers["x-forwarded-proto"] ?? req.protocol ?? "https";
+    return `${proto}://${host}`;
+  }
+  return "https://www.talk-to-my-lawyer.com";
 }
 
 // ═══════════════════════════════════════════════════════
@@ -749,7 +752,7 @@ export const appRouter = router({
           email: ctx.user.email ?? "",
           name: ctx.user.name,
           planId: input.planId,
-          origin: ctx.req.headers.origin as string ?? "https://localhost:3000",
+          origin: (ctx.req.headers.origin && !String(ctx.req.headers.origin).includes("localhost") ? ctx.req.headers.origin : ctx.req.headers["x-forwarded-host"] ? `https://${ctx.req.headers["x-forwarded-host"]}` : "https://www.talk-to-my-lawyer.com") as string,
           discountCode: input.discountCode,
         });
         return result;
@@ -758,7 +761,7 @@ export const appRouter = router({
       const url = await createBillingPortalSession({
         userId: ctx.user.id,
         email: ctx.user.email ?? "",
-        origin: ctx.req.headers.origin as string ?? "https://localhost:3000",
+        origin: (ctx.req.headers.origin && !String(ctx.req.headers.origin).includes("localhost") ? ctx.req.headers.origin : ctx.req.headers["x-forwarded-host"] ? `https://${ctx.req.headers["x-forwarded-host"]}` : "https://www.talk-to-my-lawyer.com") as string,
       });
       return { url };
     }),
@@ -1169,7 +1172,7 @@ export const appRouter = router({
         const verificationToken = crypto.randomBytes(48).toString("hex");
         await deleteUserVerificationTokens(ctx.user.id);
         await createEmailVerificationToken(ctx.user.id, input.newEmail, verificationToken);
-        const origin = ctx.req?.headers?.origin || ctx.req?.headers?.host ? `https://${ctx.req?.headers?.host}` : "http://localhost:3000";
+        const origin = (ctx.req?.headers?.origin && !String(ctx.req?.headers?.origin).includes("localhost")) ? ctx.req.headers.origin as string : (ctx.req?.headers?.["x-forwarded-host"] ? `https://${ctx.req.headers["x-forwarded-host"]}` : "https://www.talk-to-my-lawyer.com");
         const verifyUrl = `${origin}/verify-email?token=${verificationToken}`;
         try {
           await sendVerificationEmail({ to: input.newEmail, name: ctx.user.name || input.newEmail.split("@")[0], verifyUrl });

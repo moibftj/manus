@@ -6,87 +6,58 @@ import { trpc } from "@/lib/trpc";
 import { CheckCircle2, Loader2, Scale, Shield, Zap, Gift } from "lucide-react";
 import { toast } from "sonner";
 import { useLocation } from "wouter";
+import { PRICING } from "../../../shared/pricing";
 
 const PLANS = [
   {
-    id: "free_trial",
-    name: "Free Trial",
-    price: "$0",
-    period: "first letter",
-    reviewFee: "$50 attorney review",
-    description: "Generate your first AI draft for free, then pay $50 for attorney review",
-    badge: null,
-    features: [
-      "1 AI-generated legal letter draft",
-      "3-stage legal research pipeline",
-      "Full draft readable before paying",
-      "$50 for attorney review & approval",
-      "Attorney-approved PDF delivered",
-    ],
+    id: PRICING.freeTrial.id,
+    name: PRICING.freeTrial.name,
+    price: PRICING.freeTrial.priceDisplay,
+    period: PRICING.freeTrial.period,
+    reviewFee: "Attorney review included",
+    description: PRICING.freeTrial.description,
+    badge: null as string | null,
+    features: PRICING.freeTrial.features as readonly string[],
     cta: "Start Free",
     highlight: false,
     isFree: true,
   },
   {
-    id: "per_letter",
-    name: "Pay Per Letter",
-    price: "$200",
-    period: "per letter",
+    id: PRICING.perLetter.id,
+    name: PRICING.perLetter.name,
+    price: PRICING.perLetter.priceDisplay,
+    period: PRICING.perLetter.period,
     reviewFee: "Attorney review included",
-    description: "One professional legal letter with full attorney review, no commitment",
-    badge: null,
-    features: [
-      "1 professional legal letter",
-      "3-stage AI legal research pipeline",
-      "Attorney review & approval included",
-      "Attorney-approved PDF delivered",
-      "Email delivery",
-    ],
+    description: PRICING.perLetter.description,
+    badge: null as string | null,
+    features: PRICING.perLetter.features as readonly string[],
     cta: "Get This Letter",
     highlight: false,
     isFree: false,
   },
   {
-    id: "starter",
-    name: "Starter",
-    price: "$499",
-    period: "per month",
+    id: PRICING.monthlyBasic.id,
+    name: PRICING.monthlyBasic.name,
+    price: PRICING.monthlyBasic.priceDisplay,
+    period: PRICING.monthlyBasic.period,
     reviewFee: "Attorney review included",
-    description: "4 attorney-reviewed letters per month for active legal needs",
-    badge: "Most Popular",
-    features: [
-      "4 legal letters per month",
-      "Attorney review & approval included",
-      "3-stage AI legal research pipeline",
-      "All letter types supported",
-      "Attorney-approved PDF for each letter",
-      "Email delivery",
-      "Cancel anytime",
-    ],
-    cta: "Subscribe Starter",
+    description: PRICING.monthlyBasic.description,
+    badge: "Most Popular" as string | null,
+    features: PRICING.monthlyBasic.features as readonly string[],
+    cta: "Subscribe — Basic",
     highlight: true,
     isFree: false,
   },
   {
-    id: "professional",
-    name: "Professional",
-    price: "$799",
-    period: "per month",
+    id: PRICING.monthlyPro.id,
+    name: PRICING.monthlyPro.name,
+    price: PRICING.monthlyPro.priceDisplay,
+    period: PRICING.monthlyPro.period,
     reviewFee: "Attorney review included",
-    description: "8 attorney-reviewed letters per month for high-volume legal needs",
-    badge: "Best Value",
-    features: [
-      "8 legal letters per month",
-      "Attorney review & approval included",
-      "3-stage AI legal research pipeline",
-      "All letter types supported",
-      "Attorney-approved PDF for each letter",
-      "Priority attorney queue",
-      "Email delivery",
-      "Dedicated support",
-      "Cancel anytime",
-    ],
-    cta: "Subscribe Professional",
+    description: PRICING.monthlyPro.description,
+    badge: "Best Value" as string | null,
+    features: PRICING.monthlyPro.features as readonly string[],
+    cta: "Subscribe — Pro",
     highlight: false,
     isFree: false,
   },
@@ -128,7 +99,7 @@ export default function Pricing() {
           </div>
           <h1 className="text-4xl font-bold mb-4">Professional Legal Letters</h1>
           <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-            AI-powered legal drafting with mandatory attorney review. Start free, then choose the plan that fits your needs.
+            Professionally drafted and attorney-reviewed legal letters. Start with your first letter free, then choose the plan that fits your needs.
           </p>
         </div>
       </div>
@@ -163,7 +134,7 @@ export default function Pricing() {
                   <span className="text-muted-foreground ml-2">{plan.period}</span>
                 </div>
                 {plan.reviewFee && (
-                  <p className={`text-xs mt-1 font-medium ${plan.isFree ? "text-amber-600" : "text-emerald-600"}`}>
+                  <p className={`text-xs mt-1 font-medium ${plan.isFree ? "text-emerald-600" : "text-emerald-600"}`}>
                     {plan.reviewFee}
                   </p>
                 )}
@@ -194,13 +165,14 @@ export default function Pricing() {
           ))}
         </div>
 
-        {/* Pricing comparison note */}
+        {/* How it works note */}
         <div className="mt-10 p-5 bg-muted/30 border border-border rounded-xl max-w-2xl mx-auto text-center">
-          <h3 className="font-semibold text-foreground mb-2">How the Free Trial Works</h3>
+          <h3 className="font-semibold text-foreground mb-2">How It Works</h3>
           <p className="text-sm text-muted-foreground">
-            Generate your first letter draft completely free using our 3-stage AI pipeline.
-            Read the full draft before committing. When you're ready to send, pay just <strong>$50</strong> for a licensed attorney to review, edit, and approve it.
-            After your free trial, choose a subscription or pay <strong>$200</strong> per letter.
+            Your first letter — including professional research, drafting, and licensed attorney review — is completely free.
+            After your free letter, choose to pay <strong>${PRICING.perLetter.price}</strong> per letter or subscribe for{" "}
+            <strong>${PRICING.monthlyBasic.price}/month</strong> (4 letters) or{" "}
+            <strong>${PRICING.monthlyPro.price}/month</strong> (8 letters). All plans include attorney review and PDF delivery.
           </p>
         </div>
 
@@ -213,8 +185,8 @@ export default function Pricing() {
           </div>
           <div className="flex flex-col items-center gap-2">
             <Zap className="w-8 h-8 text-amber-500" />
-            <h3 className="font-semibold">3-Stage AI Pipeline</h3>
-            <p className="text-sm text-muted-foreground">Perplexity research + Claude drafting + Claude final polish for every letter</p>
+            <h3 className="font-semibold">Professional Drafting</h3>
+            <p className="text-sm text-muted-foreground">Multi-stage legal research and professional drafting for every letter</p>
           </div>
           <div className="flex flex-col items-center gap-2">
             <Scale className="w-8 h-8 text-green-500" />

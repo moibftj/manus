@@ -287,12 +287,12 @@ export default function SubscriberDashboard() {
                 </div>
                 <div>
                   <span className="text-sm font-semibold text-blue-800">
-                    {stats.total === 0 ? "Your first letter is free" : "Upgrade to a subscription"}
+                    {stats.total === 0 ? "Your first letter is free — attorney review included" : "Upgrade to a subscription"}
                   </span>
                   <p className="text-xs text-blue-600 mt-0.5">
                     {stats.total === 0
-                      ? "No credit card required — submit your first legal matter now."
-                      : "Get 4 letters/month for $79 or 48 letters/year for $599. Skip the $200 per-letter fee."}
+                      ? "No credit card required — attorney review included with your first letter."
+                      : "Get 4 letters/month for $499 or 8 letters/month for $699. Skip the $200 per-letter fee."}
                   </p>
                 </div>
               </div>
@@ -492,7 +492,7 @@ export default function SubscriberDashboard() {
                 },
                 {
                   status: "generated_unlocked",
-                  desc: "Your first free letter draft is ready to read! Send it for attorney review.",
+                  desc: "Your letter draft is ready to read! Send it for attorney review.",
                 },
                 {
                   status: "pending_review",

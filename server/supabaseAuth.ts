@@ -12,7 +12,27 @@ import * as crypto from "crypto";
 import * as db from "./db";
 import type { User } from "../drizzle/schema";
 import { getSessionCookieOptions } from "./_core/cookies";
-import { sendVerificationEmail, sendWelcomeEmail } from "./email";
+import { sendVerificationEmail, sendWelcomeEmail, sendEmployeeWelcomeEmail, sendAttorneyWelcomeEmail } from "./email";
+
+// ─── Canonical Origin URL ──────────────────────────────────────────────────
+const CANONICAL_DOMAIN = "https://www.talk-to-my-lawyer.com";
+
+/**
+ * Get the origin URL from the request, with a safe production fallback.
+ * Priority: origin header → x-forwarded-host → host header → canonical domain.
+ * NEVER falls back to localhost.
+ */
+export function getOriginUrl(req: Request): string {
+  if (req.headers.origin && !req.headers.origin.includes("localhost")) {
+    return req.headers.origin;
+  }
+  const host = req.headers["x-forwarded-host"] ?? req.headers.host;
+  if (host && !String(host).includes("localhost")) {
+    const proto = req.headers["x-forwarded-proto"] ?? "https";
+    return `${proto}://${host}`;
+  }
+  return CANONICAL_DOMAIN;
+}
 
 // ─── Supabase Clients ──────────────────────────────────────────────────────
 const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "";
@@ -204,7 +224,7 @@ export function registerSupabaseAuthRoutes(app: Express) {
         const verificationToken = crypto.randomBytes(48).toString("hex");
         await db.deleteUserVerificationTokens(appUser.id); // clear any old tokens
         await db.createEmailVerificationToken(appUser.id, email, verificationToken);
-        const origin = req.headers.origin || `https://${req.headers.host}` || "http://localhost:3000";
+        const origin = getOriginUrl(req);
         const verifyUrl = `${origin}/verify-email?token=${verificationToken}`;
         try {
           await sendVerificationEmail({ to: email, name: userName, verifyUrl });
@@ -309,6 +329,10 @@ export function registerSupabaseAuthRoutes(app: Express) {
         lastSignedIn: new Date(),
       });
 
+      // Fetch the app user to get their role
+      const appUser = await db.getUserByOpenId(data.user.id);
+      const userRole = appUser?.role || "subscriber";
+
       // Set session cookie
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(SUPABASE_SESSION_COOKIE, JSON.stringify({
@@ -325,6 +349,7 @@ export function registerSupabaseAuthRoutes(app: Express) {
           id: data.user.id,
           email: data.user.email,
           name,
+          role: userRole,
         },
         session: {
           access_token: data.session.access_token,
@@ -442,7 +467,7 @@ export function registerSupabaseAuthRoutes(app: Express) {
       });
 
       const { error } = await anonClient.auth.resetPasswordForEmail(email, {
-        redirectTo: `${req.headers.origin || "http://localhost:3000"}/reset-password`,
+        redirectTo: `${getOriginUrl(req)}/reset-password`,
       });
 
       if (error) {
@@ -512,13 +537,36 @@ export function registerSupabaseAuthRoutes(app: Express) {
         res.status(400).json({ error: "Invalid or expired verification token. Please request a new one." });
         return;
       }
-      // Send welcome email (fire-and-forget — don't block the response)
-      const origin = req.headers.origin || `https://${req.headers.host}` || "http://localhost:3000";
-      const dashboardUrl = `${origin}/dashboard`;
+      // Send role-specific welcome email (fire-and-forget — don't block the response)
+      const origin = getOriginUrl(req);
       db.getUserById(record.userId).then(async (user) => {
         if (user && user.email) {
+          const userName = user.name || user.email.split("@")[0];
           try {
-            await sendWelcomeEmail({ to: user.email, name: user.name || user.email.split("@")[0], dashboardUrl });
+            if (user.role === "employee") {
+              // Get the employee's discount code if available
+              const discountCode = await db.getDiscountCodeByEmployeeId(user.id).catch(() => null);
+              const code = discountCode?.code;
+              await sendEmployeeWelcomeEmail({
+                to: user.email,
+                name: userName,
+                discountCode: code,
+                dashboardUrl: `${origin}/employee`,
+              });
+            } else if (user.role === "attorney") {
+              await sendAttorneyWelcomeEmail({
+                to: user.email,
+                name: userName,
+                dashboardUrl: `${origin}/attorney`,
+              });
+            } else {
+              // Default subscriber welcome
+              await sendWelcomeEmail({
+                to: user.email,
+                name: userName,
+                dashboardUrl: `${origin}/dashboard`,
+              });
+            }
           } catch (emailErr) {
             console.error("[SupabaseAuth] Failed to send welcome email:", emailErr);
           }
@@ -551,7 +599,7 @@ export function registerSupabaseAuthRoutes(app: Express) {
       const verificationToken = crypto.randomBytes(48).toString("hex");
       await db.deleteUserVerificationTokens(user.id);
       await db.createEmailVerificationToken(user.id, email, verificationToken);
-      const origin = req.headers.origin || `https://${req.headers.host}` || "http://localhost:3000";
+      const origin = getOriginUrl(req);
       const verifyUrl = `${origin}/verify-email?token=${verificationToken}`;
       try {
         await sendVerificationEmail({ to: email, name: user.name || email.split("@")[0], verifyUrl });

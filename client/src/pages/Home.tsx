@@ -168,7 +168,7 @@ export default function Home() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 bg-white/70 border border-blue-200 rounded-full px-4 py-1.5 mb-8 text-sm text-blue-700 font-medium shadow-sm">
             <span className="w-2 h-2 bg-green-500 rounded-full inline-block animate-pulse"></span>
-            Your First Letter Is Free — No Credit Card Required
+            Your First Letter Is Free — Attorney Review Included
           </div>
 
           <h1 className="text-5xl sm:text-6xl lg:text-7xl font-extrabold text-slate-900 mb-4 leading-tight tracking-tight">
@@ -202,7 +202,7 @@ export default function Home() {
 
           <p className="text-slate-700 text-lg mb-10 font-medium max-w-2xl mx-auto">
             Describe your legal situation. Our attorneys research applicable laws, draft a professional letter, and review every word before delivery.{" "}
-            <span className="text-blue-600 font-bold">Try your first letter free.</span>
+            <span className="text-blue-600 font-bold">Try your first letter free — attorney review included.</span>
           </p>
 
           <div className="flex flex-col sm:flex-row gap-3 justify-center mb-14">
@@ -211,7 +211,7 @@ export default function Home() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-8 h-12 text-base font-semibold rounded-xl shadow-lg shadow-blue-200 flex items-center gap-2"
               onClick={goToLogin}
             >
-              <Play className="w-4 h-4" fill="white" /> Start Your Free Letter
+              <Play className="w-4 h-4" fill="white" /> Start Your Free Letter →
             </Button>
             <Button
               size="lg"
@@ -240,7 +240,7 @@ export default function Home() {
           {/* Trust badges */}
           <div className="flex flex-wrap justify-center gap-8 text-sm text-slate-600">
             {[
-              { icon: CheckCircle2, label: "First letter free" },
+              { icon: CheckCircle2, label: "First letter free — attorney review included" },
               { icon: CheckCircle2, label: "24–48 hour attorney turnaround" },
               { icon: CheckCircle2, label: "Downloadable PDF" },
               { icon: CheckCircle2, label: "Licensed attorney sign-off" },
@@ -409,7 +409,7 @@ export default function Home() {
             Simple, Transparent Pricing
           </h2>
           <p className="text-slate-600 text-lg mb-3">
-            Your first letter is free. After that, choose the plan that fits.
+            Your first letter is completely free — including attorney review. After that, choose the plan that fits.
           </p>
           <p className="text-blue-600 text-sm mb-12 font-semibold">
             Have an affiliate code? Apply it at checkout for 20% off.
@@ -426,18 +426,18 @@ export default function Home() {
               },
               {
                 plan: "Monthly",
-                price: "$79",
+                price: "$499",
                 period: "/month",
-                features: ["4 letters per month", "Priority attorney review", "Downloadable PDFs", "Cancel anytime"],
+                features: ["4 letters per month", "Attorney review included", "Downloadable PDFs", "Cancel anytime"],
                 sub: "Best for ongoing legal matters",
                 highlight: true,
               },
               {
-                plan: "Annual",
-                price: "$599",
-                period: "/year",
-                features: ["48 letters per year", "Priority attorney review", "Downloadable PDFs", "Save $349 vs monthly"],
-                sub: "Best value for frequent users",
+                plan: "Monthly Pro",
+                price: "$699",
+                period: "/month",
+                features: ["8 letters per month", "Attorney review included", "Downloadable PDFs", "Priority support"],
+                sub: "Best value for high-volume users",
                 highlight: false,
               },
             ].map((tier) => (
@@ -505,9 +505,9 @@ export default function Home() {
               className="bg-blue-600 hover:bg-blue-700 text-white px-10 h-12 text-lg shadow-lg rounded-xl"
               onClick={goToLogin}
             >
-              Start Your Free Letter <ArrowRight className="ml-2 w-5 h-5" />
+              Start Your Free Letter — No Credit Card Required <ArrowRight className="ml-2 w-5 h-5" />
             </Button>
-            <p className="text-slate-500 text-sm">No credit card required for your first letter</p>
+            <p className="text-slate-500 text-sm">First letter free — attorney review included, no credit card required</p>
           </div>
         </div>
       </section>
@@ -538,7 +538,7 @@ export default function Home() {
               },
               {
                 q: "How much does it cost after the first letter?",
-                a: "After your free letter, you can pay $200 per letter on a one-time basis, or subscribe to our Monthly plan ($79/month for 4 letters) or Annual plan ($599/year for 48 letters). Affiliate discount codes can reduce the price by 20% on any plan.",
+                a: "After your free letter, you can pay $200 per letter on a one-time basis, or subscribe to our Monthly Basic plan ($499/month for 4 letters) or Monthly Pro plan ($699/month for 8 letters). All plans include attorney review and PDF delivery. Affiliate discount codes can reduce the price by 20% on any plan.",
               },
               {
                 q: "How long does it take to receive my letter?",
@@ -558,7 +558,7 @@ export default function Home() {
               },
               {
                 q: "Can I see the draft before the attorney finalizes it?",
-                a: "Yes. For your first free letter, you see the full draft and can send it for attorney review at no cost. For subsequent letters without a subscription, you see a blurred preview and can either pay $200 to unlock it or subscribe to a monthly or annual plan.",
+                a: "Yes. For your first free letter, you see the full draft and attorney review is included at no cost. For subsequent letters without a subscription, you see a blurred preview and can either pay $200 to unlock it or subscribe to a monthly plan.",
               },
               {
                 q: "Is my information confidential?",

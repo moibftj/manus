@@ -22,15 +22,15 @@ describe("Letter unlock pricing", () => {
     expect(PLANS.per_letter.interval).toBe("one_time");
   });
 
-  it("starter plan is $499/month with 4 letters", () => {
-    expect(PLANS.starter.price).toBe(49900);
-    expect(PLANS.starter.lettersAllowed).toBe(4);
-    expect(PLANS.starter.interval).toBe("month");
+  it("monthly_basic plan is $499/month with 4 letters", () => {
+    expect(PLANS.monthly_basic.price).toBe(49900);
+    expect(PLANS.monthly_basic.lettersAllowed).toBe(4);
+    expect(PLANS.monthly_basic.interval).toBe("month");
   });
-  it("professional plan is $799/month with 8 letters", () => {
-    expect(PLANS.professional.price).toBe(79900);
-    expect(PLANS.professional.lettersAllowed).toBe(8);
-    expect(PLANS.professional.interval).toBe("month");
+  it("monthly_pro plan is $699/month with 8 letters", () => {
+    expect(PLANS.monthly_pro.price).toBe(69900);
+    expect(PLANS.monthly_pro.lettersAllowed).toBe(8);
+    expect(PLANS.monthly_pro.interval).toBe("month");
   });
 });
 
@@ -64,7 +64,11 @@ describe("Plan configuration integrity", () => {
       expect(plan.id).toBe(key);
       expect(plan.name).toBeTruthy();
       expect(plan.description).toBeTruthy();
-      expect(plan.price).toBeGreaterThan(0);
+      // free_trial is $0; all other plans must have a positive price
+      expect(plan.price).toBeGreaterThanOrEqual(0);
+      if (plan.id !== "free_trial") {
+        expect(plan.price).toBeGreaterThan(0);
+      }
       expect(plan.features.length).toBeGreaterThan(0);
       expect(["one_time", "month", "year"]).toContain(plan.interval);
     }

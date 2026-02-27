@@ -927,3 +927,35 @@
 - [x] Installed node-cron + @types/node-cron
 - [x] Tests: 10/10 passing in phase74-pipeline-sync.test.ts, 477/477 total, 0 TypeScript errors
 - [x] Save checkpoint
+
+## Phase 75: Fix Auth Flow + Employee/Attorney Email Templates
+
+- [x] Created getOriginUrl() helper in supabaseAuth.ts — never falls back to localhost
+- [x] Fixed all 5 localhost fallbacks in supabaseAuth.ts (signup, forgot-password, verify-email, resend-verification, welcome)
+- [x] Fixed all 3 localhost fallbacks in routers.ts (createCheckout, createBillingPortal, updateEmail)
+- [x] Fixed getAppUrl() in routers.ts — canonical domain fallback
+- [ ] User must update Supabase Dashboard site URL to https://www.talk-to-my-lawyer.com (cannot be done via API)
+- [ ] Audit frontend auth pages: signup, login, forgot-password, reset-password, verify-email
+- [ ] Add branded employee notification emails (welcome, new referral, commission earned, payout processed)
+- [ ] Add branded attorney notification emails (new letter assigned, review reminder, letter approved)
+- [ ] Wire employee/attorney emails into signup and relevant procedures
+- [ ] Update ttml-backend-patterns skill with auth flow and email patterns
+- [ ] Write tests and save checkpoint
+
+## Phase 76: Pricing Model Overhaul + Employee/Attorney Email Templates
+
+- [x] Created shared/pricing.ts as single source of truth for pricing constants
+- [x] Rewrote server/stripe-products.ts with new plan IDs: free_trial, per_letter, monthly_basic, monthly_pro
+- [x] Added LEGACY_PLAN_ALIASES for backward compatibility (starter→monthly_basic, professional→monthly_pro, etc.)
+- [x] Updated stripe.ts: removed TRIAL_REVIEW_PRICE_CENTS import, deprecated createTrialReviewCheckout, updated hasActiveRecurringSubscription to support new + legacy plan IDs
+- [x] Updated stripeWebhook.ts: default plan ID changed from starter → monthly_basic
+- [x] Rewrote Pricing.tsx with correct prices ($200/letter, $499/month Basic, $699/month Pro)
+- [x] Updated Home.tsx pricing section with correct prices
+- [x] Updated FAQ.tsx with correct prices
+- [x] Updated Billing.tsx with correct plan names and prices
+- [x] Updated Dashboard.tsx with correct upgrade CTA copy
+- [x] Added 5 new branded email templates: sendEmployeeWelcomeEmail, sendAttorneyWelcomeEmail, sendAttorneyReviewAssignedEmail, sendAttorneyReviewCompletedEmail, sendEmployeeCommissionEarnedEmail
+- [x] Wired role-specific welcome emails into verify-email endpoint (employee → employee welcome, attorney_admin → attorney welcome)
+- [x] Updated phase67-pricing.test.ts to match new plan IDs and prices
+- [x] Updated phase26.test.ts to use monthly_basic/monthly_pro plan IDs
+- [x] All 484 tests passing, 0 TypeScript errors

@@ -38,15 +38,15 @@ const FAQ_CATEGORIES = [
     items: [
       {
         q: "How much does a letter cost?",
-        a: "Your first letter draft is generated completely free. You can read the full draft before paying. To submit it for attorney review and receive the final approved PDF, there is a $50 fee. After your free trial, a single attorney-reviewed letter costs $200 (pay-per-letter), or you can subscribe for $499/month (4 letters) or $799/month (8 letters) with attorney review included.",
+        a: "Your first letter is completely free — including professional research, drafting, and licensed attorney review. After your free letter, a single attorney-reviewed letter costs $200 (pay-per-letter), or you can subscribe for $499/month (4 letters) or $699/month (8 letters) with attorney review included.",
       },
       {
-        q: "What does the $50 trial review fee include?",
-        a: "The $50 trial review fee covers attorney review and editing of your first AI-generated draft, attorney approval and sign-off, and a downloadable professionally formatted PDF of the final approved letter. The $200 pay-per-letter fee (for subsequent letters) includes the same plus the full AI drafting pipeline.",
+        q: "What is included with the free first letter?",
+        a: "Your first letter includes everything: professional legal research, attorney-drafted letter, licensed attorney review and approval, and a downloadable PDF of the final approved letter. No credit card required. After your free letter, the $200 pay-per-letter fee covers the same complete service.",
       },
       {
         q: "Do you offer subscription plans?",
-        a: "Yes. We offer two subscription plans: Starter at $499/month (4 letters with attorney review included) and Professional at $799/month (8 letters with attorney review included). Subscribers bypass the per-letter paywall entirely. Visit our Pricing page for full details.",
+        a: "Yes. We offer two subscription plans: Monthly Basic at $499/month (4 letters with attorney review included) and Monthly Pro at $699/month (8 letters with attorney review included). Subscribers bypass the per-letter paywall entirely. Visit our Pricing page for full details.",
       },
       {
         q: "What payment methods do you accept?",
@@ -71,7 +71,7 @@ const FAQ_CATEGORIES = [
       },
       {
         q: "Can I see the draft before paying?",
-        a: "Yes — and for your first letter, you can read the full draft for free before paying anything. To submit it for attorney review, pay the $50 trial review fee. For subsequent letters without a subscription, the draft is partially blurred until you pay the $200 per-letter fee.",
+        a: "Yes — and for your first letter, you can read the full draft and attorney review is included at no cost. For subsequent letters without a subscription, the draft is partially blurred until you pay the $200 per-letter fee or subscribe to a monthly plan.",
       },
       {
         q: "What if the attorney requests changes?",

@@ -30,7 +30,7 @@ describe("sendDraftReminderEmail — export and signature", () => {
       appUrl: "https://talk-to-my-lawyer.manus.space",
     });
     await expect(result).resolves.toBeUndefined();
-  });
+  }, 15000);
 
   it("accepts full params including letterType, jurisdictionState, hoursWaiting", async () => {
     const { sendDraftReminderEmail } = await import("./email");

@@ -2,47 +2,51 @@
  * Stripe Products & Pricing Configuration
  * Talk-to-My-Lawyer — Legal Letter Generation Platform
  *
- * Pricing model:
- *  free_trial_review — $50 one-time: first-ever letter attorney review fee
- *  per_letter        — $200 one-time: pay-as-you-go (post-trial)
- *  starter           — $499/month: 4 letters/month, attorney review included
- *  professional      — $799/month: 8 letters/month, attorney review included
+ * Pricing model (source of truth — see also shared/pricing.ts):
+ *  free_trial   — $0: first letter completely free (research + draft + attorney review)
+ *  per_letter   — $200 one-time: pay-as-you-go (post-trial)
+ *  monthly_basic — $499/month: 4 letters/month, attorney review included
+ *  monthly_pro   — $699/month: 8 letters/month, attorney review included
  *
- * First letter draft is FREE to generate.
- * Attorney review of the first draft costs $50.
- * All subsequent letters require a subscription or $200 per-letter payment.
+ * Legacy plan IDs kept for backward compatibility with existing Stripe subscriptions:
+ *  starter      → treated as monthly_basic ($499/month, 4 letters)
+ *  professional → treated as monthly_pro ($699/month, 8 letters)
  */
 
 export interface PlanConfig {
-  id: "free_trial_review" | "per_letter" | "starter" | "professional";
+  id: "free_trial" | "per_letter" | "monthly_basic" | "monthly_pro";
   isTrial?: boolean;
   name: string;
   description: string;
   price: number; // in cents
-  interval: "one_time" | "month" | "year";
+  interval: "one_time" | "month";
   lettersAllowed: number; // -1 = unlimited
   badge?: string;
   features: string[];
 }
 
-/** Price in cents for the free-trial attorney review ($50) */
-export const TRIAL_REVIEW_PRICE_CENTS = 5000; // $50
-
 /** Price in cents for a single pay-per-letter unlock ($200) */
 export const LETTER_UNLOCK_PRICE_CENTS = 20000; // $200
 
+/** Price in cents for Monthly Basic ($499/month) */
+export const MONTHLY_BASIC_PRICE_CENTS = 49900; // $499
+
+/** Price in cents for Monthly Pro ($699/month) */
+export const MONTHLY_PRO_PRICE_CENTS = 69900; // $699
+
 export const PLANS: Record<string, PlanConfig> = {
-  free_trial_review: {
-    id: "free_trial_review",
-    name: "Free Trial Review",
-    description: "Attorney review of your first free draft",
-    price: TRIAL_REVIEW_PRICE_CENTS, // $50
+  free_trial: {
+    id: "free_trial",
+    name: "Free Trial",
+    description: "Your first letter — research, drafting, and attorney review at no cost",
+    price: 0,
     interval: "one_time",
-    lettersAllowed: 0,
+    lettersAllowed: 1,
     isTrial: true,
     features: [
-      "Attorney review of your first draft",
-      "Professional edits & approval",
+      "Professional legal research",
+      "Attorney-drafted letter",
+      "Licensed attorney review & approval",
       "Final approved PDF",
       "Email delivery",
     ],
@@ -50,61 +54,80 @@ export const PLANS: Record<string, PlanConfig> = {
   per_letter: {
     id: "per_letter",
     name: "Pay Per Letter",
-    description: "One professional legal letter, no commitment",
+    description: "One professional legal letter with full attorney review, no commitment",
     price: LETTER_UNLOCK_PRICE_CENTS, // $200
     interval: "one_time",
     lettersAllowed: 1,
     features: [
       "1 professional legal letter",
-      "Legal research & drafting",
-      "Attorney review & approval",
+      "Professional legal research",
+      "Attorney-drafted letter",
+      "Licensed attorney review & approval",
       "Final approved PDF",
       "Email delivery",
     ],
   },
-  starter: {
-    id: "starter",
-    name: "Starter",
+  monthly_basic: {
+    id: "monthly_basic",
+    name: "Monthly Basic",
     description: "4 attorney-reviewed letters per month",
-    price: 49900, // $499/month
+    price: MONTHLY_BASIC_PRICE_CENTS, // $499/month
     interval: "month",
     lettersAllowed: 4,
     badge: "Most Popular",
     features: [
       "4 professional legal letters/month",
       "Attorney review included",
-      "Legal research & drafting",
+      "Professional legal research",
       "All letter types supported",
       "Final approved PDFs",
       "Email delivery",
+      "Priority support",
       "Cancel anytime",
     ],
   },
-  professional: {
-    id: "professional",
-    name: "Professional",
+  monthly_pro: {
+    id: "monthly_pro",
+    name: "Monthly Pro",
     description: "8 attorney-reviewed letters per month",
-    price: 79900, // $799/month
+    price: MONTHLY_PRO_PRICE_CENTS, // $699/month
     interval: "month",
     lettersAllowed: 8,
     badge: "Best Value",
     features: [
       "8 professional legal letters/month",
-      "Priority attorney review",
-      "Legal research & drafting",
+      "Attorney review included",
+      "Professional legal research",
       "All letter types supported",
       "Final approved PDFs",
       "Email delivery",
-      "Dedicated support",
-      "Save vs pay-per-letter",
+      "Dedicated account support",
+      "Cancel anytime",
     ],
   },
+};
+
+/**
+ * Legacy plan ID aliases — maps old Stripe plan IDs to current plan configs.
+ * Used for backward compatibility with existing subscriptions.
+ */
+export const LEGACY_PLAN_ALIASES: Record<string, string> = {
+  starter: "monthly_basic",       // $499/month, 4 letters (was $499/month)
+  professional: "monthly_pro",    // $699/month, 8 letters (was $799/month)
+  free_trial_review: "free_trial", // old $50 trial review → now free
+  annual: "monthly_pro",          // old annual plan → monthly_pro
+  monthly: "monthly_basic",       // old monthly plan → monthly_basic
 };
 
 export const PLAN_LIST = Object.values(PLANS);
 
 export function getPlanConfig(planId: string): PlanConfig | undefined {
-  return PLANS[planId];
+  // Check direct match first
+  if (PLANS[planId]) return PLANS[planId];
+  // Fall back to legacy alias
+  const aliasId = LEGACY_PLAN_ALIASES[planId];
+  if (aliasId) return PLANS[aliasId];
+  return undefined;
 }
 
 export function canSubmitLetter(
