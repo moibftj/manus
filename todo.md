@@ -895,6 +895,10 @@
 - [ ] Wire /letters route and add nav entry to subscriber dashboard
 - [ ] Write tests and save checkpoint
 
+## Phase 73.1: Revalidation Fix — Stale Phase 23 Test
+- [x] Fixed phase23.test.ts: removed generated_unlocked transition expectation (superseded by Phase 69)
+- [x] All 467/467 tests passing, 0 TypeScript errors
+
 ## Phase 73: Align n8n Workflow with 3-Stage Pipeline
 
 - [x] Audited current n8n workflow (Pr5n5JlkgBKcwZPe9z678) via n8n REST API — identified 5 gaps
