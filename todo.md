@@ -856,3 +856,13 @@
 - [x] Frontend: promo code field on LetterPaywall (all tiers — validate via affiliate.validateCode, show discount, pass to checkout)
 - [x] Frontend: promo code field on LetterDetail $50 trial and $200 per-letter CTAs
 - [x] 398/398 tests passing, 0 TypeScript errors
+
+## Phase 69: Simplified Letter Flow (Single-Path Pipeline + Review Queue Cleanup)
+- [x] Pipeline always ends at generated_locked (removed generated_unlocked bypass and subscriber free-unlock path)
+- [x] STATUS_CONFIG: human-friendly labels — "Draft Ready", "Awaiting Review", "Changes Requested", "Drafting"
+- [x] ALLOWED_TRANSITIONS: removed drafting→generated_unlocked and generated_locked→generated_unlocked
+- [x] LetterPaywall: simplified to single $200 CTA with blurred draft preview (removed $50 trial and subscription upsell)
+- [x] LetterDetail (subscriber): removed generated_unlocked branch, added in-progress status cards, cleaner flow
+- [x] StatusTimeline: rewritten with 6-step simplified flow, no generated_unlocked step
+- [x] ReviewQueue: filter to REVIEW_STATUSES only (pending_review+), added "New" badge for letters < 24h old
+- [x] Tests: 32/32 passing in phase69-letter-flow.test.ts, 0 TypeScript errors
