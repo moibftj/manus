@@ -10,6 +10,7 @@ import {
   boolean,
   serial,
   index,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 // ─── User Roles ───
@@ -338,6 +339,7 @@ export const commissionLedger = pgTable("commission_ledger", {
   employeeIdx: index("idx_commission_ledger_employee_id").on(t.employeeId),
   statusIdx: index("idx_commission_ledger_status").on(t.status),
   employeeStatusIdx: index("idx_commission_ledger_employee_status").on(t.employeeId, t.status),
+  uniquePaymentIntentIdx: uniqueIndex("uq_commission_ledger_stripe_pi").on(t.stripePaymentIntentId),
 }));
 
 export type CommissionLedgerEntry = typeof commissionLedger.$inferSelect;
