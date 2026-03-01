@@ -1126,3 +1126,36 @@
 - [x] Create alert rule: 💳 Stripe Webhook Error (id: 16739014, filter: component=stripe_webhook)
 - [x] Create alert rule: 📈 High Error Rate Spike (id: 16739015, >10 events/hour)
 - [x] Verify all 4 alert rules active in Sentry (3 new + 1 existing high-priority)
+
+## Phase 86 — Comprehensive Role & Workflow Audit + Fixes
+
+### Password Reset
+- [x] Password reset flow works for all roles (ForgotPassword → Supabase email → ResetPassword with token extraction)
+- [x] Reset page has new password + confirm password fields with show/hide toggle
+- [x] Redirect works: Supabase sends #access_token=xxx&type=recovery, page extracts and uses tokens
+
+### Unique Sign-up/Login/IDs per Role
+- [x] Role selector on sign-up page (subscriber, attorney, employee) with descriptions and icons
+- [x] Unique user IDs (Supabase UUID) and role-based access enforced (4 procedure guards + ProtectedRoute)
+- [x] Each role redirects to distinct dashboard: subscriber→/dashboard, attorney→/attorney, employee→/employee, admin→/admin
+
+### Letter Lifecycle (Generation → Approval)
+- [x] Verified: Submit intake → submitted → researching → drafting → generated_locked (pipeline.ts stages 1+2+assembly)
+- [x] Verified: freeUnlock (routers.ts) and Stripe webhook (stripeWebhook.ts) both transition generated_locked → pending_review
+- [x] Verified: claim→under_review, approve→approved (PDF+email), reject→rejected, requestChanges→needs_changes
+- [x] Verified: approval triggers generateAndUploadApprovedPdf → S3 URL stored → LetterDetail shows Download button
+- [x] Full lifecycle synced: submitted→researching→drafting→generated_locked→pending_review→under_review→approved→PDF→downloadable
+
+### Employee Dashboard & Discount Codes
+- [x] Employee Dashboard is AffiliateDashboard (display-only with real-time commission stats)
+- [x] Show discount code with copy-to-clipboard icon (already in AffiliateDashboard)
+- [x] Show referral link with copy icon (already in AffiliateDashboard)
+- [x] Show real-time earnings: total commissions, pending payouts, paid out (already in AffiliateDashboard)
+- [x] Removed orphaned employee/Dashboard.tsx (had review center code), moved ReviewQueue+ReviewDetail to attorney/ folder
+- [x] Auto-generate discount codes for employees on sign-up (verified in supabaseAuth.ts)
+- [x] 5% commission on discount code usage tracked in commission_ledger (verified in stripeWebhook.ts)
+
+### Admin Analytics Dashboard
+- [x] User counts by role displayed (subscribers, attorneys, employees, admins) in admin Dashboard.tsx
+- [x] Letter statistics displayed: total, by status (color-coded grid), recent 30-day count
+- [x] Revenue overview displayed: total sales, total commissions, pending payouts, active subscriptions

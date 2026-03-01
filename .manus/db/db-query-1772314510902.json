@@ -1,0 +1,40 @@
+{
+  "query": "SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2nY6aM4N4o8j7TM.03f306c44314 --database m5gFtPM9Pr9uZ46M8fspGe --execute SELECT table_name FROM information_schema.tables WHERE table_schema = DATABASE() ORDER BY table_name",
+  "rows": [
+    {
+      "table_name": "__drizzle_migrations"
+    },
+    {
+      "table_name": "attachments"
+    },
+    {
+      "table_name": "letter_requests"
+    },
+    {
+      "table_name": "letter_versions"
+    },
+    {
+      "table_name": "notifications"
+    },
+    {
+      "table_name": "research_runs"
+    },
+    {
+      "table_name": "review_actions"
+    },
+    {
+      "table_name": "subscriptions"
+    },
+    {
+      "table_name": "users"
+    },
+    {
+      "table_name": "workflow_jobs"
+    }
+  ],
+  "messages": [],
+  "stdout": "table_name\n__drizzle_migrations\nattachments\nletter_requests\nletter_versions\nnotifications\nresearch_runs\nreview_actions\nsubscriptions\nusers\nworkflow_jobs\n",
+  "stderr": "",
+  "execution_time_ms": 351
+}

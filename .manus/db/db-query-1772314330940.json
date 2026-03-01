@@ -1,0 +1,28 @@
+{
+  "query": "SELECT id, email, name, role FROM users ORDER BY id",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2nY6aM4N4o8j7TM.03f306c44314 --database m5gFtPM9Pr9uZ46M8fspGe --execute SELECT id, email, name, role FROM users ORDER BY id",
+  "rows": [
+    {
+      "id": "1",
+      "email": "moizj00@gmail.com",
+      "name": "Moiz Jamil",
+      "role": "admin"
+    },
+    {
+      "id": "60010",
+      "email": "aqeelwebbing@gmail.com",
+      "name": "Aqeel Webbing",
+      "role": "subscriber"
+    },
+    {
+      "id": "540005",
+      "email": "mamachicken2025@outlook.com",
+      "name": "Mana Cu",
+      "role": "subscriber"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\trole\n1\tmoizj00@gmail.com\tMoiz Jamil\tadmin\n60010\taqeelwebbing@gmail.com\tAqeel Webbing\tsubscriber\n540005\tmamachicken2025@outlook.com\tMana Cu\tsubscriber\n",
+  "stderr": "",
+  "execution_time_ms": 358
+}

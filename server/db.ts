@@ -13,6 +13,7 @@ import {
   payoutRequests,
   researchRuns,
   reviewActions,
+  subscriptions,
   users,
   workflowJobs,
 } from "../drizzle/schema";
@@ -574,6 +575,8 @@ export async function markAllNotificationsRead(userId: number) {
 export async function getSystemStats() {
   const db = await getDb();
   if (!db) return null;
+
+  // Core counts
   const [totalLetters] = await db.select({ count: sql<number>`count(*)` }).from(letterRequests);
   const [pendingReview] = await db.select({ count: sql<number>`count(*)` }).from(letterRequests).where(
     inArray(letterRequests.status, ["pending_review", "under_review"] as any)
@@ -581,14 +584,70 @@ export async function getSystemStats() {
   const [approved] = await db.select({ count: sql<number>`count(*)` }).from(letterRequests).where(eq(letterRequests.status, "approved" as any));
   const [failedJobs] = await db.select({ count: sql<number>`count(*)` }).from(workflowJobs).where(eq(workflowJobs.status, "failed"));
   const [totalUsers] = await db.select({ count: sql<number>`count(*)` }).from(users);
-  const [subscribers] = await db.select({ count: sql<number>`count(*)` }).from(users).where(eq(users.role, "subscriber"));
+
+  // User counts by role
+  const roleCounts = await db
+    .select({ role: users.role, count: sql<number>`count(*)` })
+    .from(users)
+    .groupBy(users.role);
+  const byRole: Record<string, number> = {};
+  for (const r of roleCounts) {
+    byRole[r.role] = Number(r.count);
+  }
+
+  // Letter counts by status
+  const statusCounts = await db
+    .select({ status: letterRequests.status, count: sql<number>`count(*)` })
+    .from(letterRequests)
+    .groupBy(letterRequests.status);
+  const byStatus: Record<string, number> = {};
+  for (const s of statusCounts) {
+    byStatus[s.status] = Number(s.count);
+  }
+
+  // Revenue: total commission amounts
+  const [totalCommissions] = await db
+    .select({ total: sql<number>`COALESCE(SUM(commission_amount), 0)` })
+    .from(commissionLedger);
+  const [pendingCommissions] = await db
+    .select({ total: sql<number>`COALESCE(SUM(commission_amount), 0)` })
+    .from(commissionLedger)
+    .where(eq(commissionLedger.status, "pending"));
+  const [totalSalesAmount] = await db
+    .select({ total: sql<number>`COALESCE(SUM(sale_amount), 0)` })
+    .from(commissionLedger);
+
+  // Active subscriptions count
+  const [activeSubscriptions] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(subscriptions)
+    .where(eq(subscriptions.status, "active" as any));
+
+  // Letters created in last 30 days
+  const [recentLetters] = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(letterRequests)
+    .where(sql`${letterRequests.createdAt} > NOW() - INTERVAL '30 days'`);
+
   return {
     totalLetters: Number(totalLetters?.count ?? 0),
     pendingReview: Number(pendingReview?.count ?? 0),
-    approved: Number(approved?.count ?? 0),
+    approvedLetters: Number(approved?.count ?? 0),
     failedJobs: Number(failedJobs?.count ?? 0),
     totalUsers: Number(totalUsers?.count ?? 0),
-    subscribers: Number(subscribers?.count ?? 0),
+    subscribers: Number(byRole.subscriber ?? 0),
+    attorneys: Number(byRole.attorney ?? 0),
+    employees: Number(byRole.employee ?? 0),
+    admins: Number(byRole.admin ?? 0),
+    byRole,
+    byStatus,
+    revenue: {
+      totalSales: Number(totalSalesAmount?.total ?? 0),
+      totalCommissions: Number(totalCommissions?.total ?? 0),
+      pendingCommissions: Number(pendingCommissions?.total ?? 0),
+    },
+    activeSubscriptions: Number(activeSubscriptions?.count ?? 0),
+    recentLetters: Number(recentLetters?.count ?? 0),
   };
 }
 

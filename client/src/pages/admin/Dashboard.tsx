@@ -2,12 +2,21 @@ import AppLayout from "@/components/shared/AppLayout";
 import { trpc } from "@/lib/trpc";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { FileText, Users, AlertCircle, CheckCircle, Clock, ArrowRight, Activity } from "lucide-react";
+import {
+  FileText, Users, AlertCircle, CheckCircle, ArrowRight, Activity,
+  DollarSign, UserCheck, Scale, Briefcase, ShieldCheck, TrendingUp,
+  Clock, CalendarDays,
+} from "lucide-react";
 import { Link } from "wouter";
+
+function formatCents(cents: number): string {
+  return `$${(cents / 100).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
 
 export default function AdminDashboard() {
   const { data: stats, isLoading } = trpc.admin.stats.useQuery();
   const { data: failedJobs } = trpc.admin.failedJobs.useQuery();
+  const s = stats as any;
 
   return (
     <AppLayout breadcrumb={[{ label: "Admin Dashboard" }]}>
@@ -15,56 +24,135 @@ export default function AdminDashboard() {
         {/* Header */}
         <div className="bg-gradient-to-r from-slate-800 to-slate-700 rounded-2xl p-6 text-white">
           <h1 className="text-xl font-bold mb-1">Admin Dashboard</h1>
-          <p className="text-slate-300 text-sm">System overview and management controls</p>
+          <p className="text-slate-300 text-sm">System overview, analytics, and management controls</p>
         </div>
 
-        {/* Stats Grid */}
         {isLoading ? (
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => <div key={i} className="h-24 bg-muted animate-pulse rounded-xl" />)}
           </div>
         ) : stats ? (
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[
-              { label: "Total Letters", value: (stats as any).totalLetters ?? 0, icon: <FileText className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
-              { label: "Total Users", value: (stats as any).totalUsers ?? 0, icon: <Users className="w-5 h-5" />, color: "text-indigo-600", bg: "bg-indigo-50" },
-              { label: "Approved", value: (stats as any).approvedLetters ?? 0, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600", bg: "bg-green-50" },
-              { label: "Failed Jobs", value: (stats as any).failedJobs ?? 0, icon: <AlertCircle className="w-5 h-5" />, color: "text-red-600", bg: "bg-red-50", alert: ((stats as any).failedJobs ?? 0) > 0 },
-            ].map((stat) => (
-              <Card key={stat.label} className={stat.alert ? "border-red-300" : ""}>
-                <CardContent className="p-4">
-                  <div className={`w-9 h-9 ${stat.bg} rounded-lg flex items-center justify-center mb-3 ${stat.color}`}>
-                    {stat.icon}
+          <>
+            {/* Primary Stats */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              {[
+                { label: "Total Users", value: s.totalUsers ?? 0, icon: <Users className="w-5 h-5" />, color: "text-indigo-600", bg: "bg-indigo-50" },
+                { label: "Total Letters", value: s.totalLetters ?? 0, icon: <FileText className="w-5 h-5" />, color: "text-blue-600", bg: "bg-blue-50" },
+                { label: "Approved", value: s.approvedLetters ?? 0, icon: <CheckCircle className="w-5 h-5" />, color: "text-green-600", bg: "bg-green-50" },
+                { label: "Failed Jobs", value: s.failedJobs ?? 0, icon: <AlertCircle className="w-5 h-5" />, color: "text-red-600", bg: "bg-red-50", alert: (s.failedJobs ?? 0) > 0 },
+              ].map((stat) => (
+                <Card key={stat.label} className={stat.alert ? "border-red-300" : ""}>
+                  <CardContent className="p-4">
+                    <div className={`w-9 h-9 ${stat.bg} rounded-lg flex items-center justify-center mb-3 ${stat.color}`}>
+                      {stat.icon}
+                    </div>
+                    <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+
+            {/* User Counts by Role */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Users className="w-4 h-4 text-primary" />
+                  Users by Role
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { role: "Subscribers", count: s.subscribers ?? 0, icon: <UserCheck className="w-4 h-4" />, color: "text-blue-600", bg: "bg-blue-50" },
+                    { role: "Attorneys", count: s.attorneys ?? 0, icon: <Scale className="w-4 h-4" />, color: "text-purple-600", bg: "bg-purple-50" },
+                    { role: "Employees", count: s.employees ?? 0, icon: <Briefcase className="w-4 h-4" />, color: "text-amber-600", bg: "bg-amber-50" },
+                    { role: "Admins", count: s.admins ?? 0, icon: <ShieldCheck className="w-4 h-4" />, color: "text-slate-600", bg: "bg-slate-100" },
+                  ].map((item) => (
+                    <div key={item.role} className={`${item.bg} rounded-lg p-4 text-center`}>
+                      <div className={`w-8 h-8 rounded-full ${item.bg} flex items-center justify-center mx-auto mb-2 ${item.color}`}>
+                        {item.icon}
+                      </div>
+                      <p className="text-2xl font-bold text-foreground">{item.count}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.role}</p>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Letter Statistics by Status */}
+            {s.byStatus && Object.keys(s.byStatus).length > 0 && (
+              <Card>
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Activity className="w-4 h-4 text-primary" />
+                    Letters by Status
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                    {Object.entries(s.byStatus as Record<string, number>)
+                      .sort(([, a], [, b]) => (b as number) - (a as number))
+                      .map(([status, count]) => {
+                        const statusColors: Record<string, string> = {
+                          submitted: "bg-slate-50 border-slate-200",
+                          researching: "bg-cyan-50 border-cyan-200",
+                          drafting: "bg-sky-50 border-sky-200",
+                          generated_locked: "bg-amber-50 border-amber-200",
+                          generated_unlocked: "bg-yellow-50 border-yellow-200",
+                          pending_review: "bg-orange-50 border-orange-200",
+                          under_review: "bg-indigo-50 border-indigo-200",
+                          needs_changes: "bg-pink-50 border-pink-200",
+                          approved: "bg-green-50 border-green-200",
+                          rejected: "bg-red-50 border-red-200",
+                        };
+                        return (
+                          <div key={status} className={`rounded-lg p-3 text-center border ${statusColors[status] || "bg-muted/50"}`}>
+                            <p className="text-xl font-bold text-foreground">{count as number}</p>
+                            <p className="text-xs text-muted-foreground capitalize mt-0.5">{status.replace(/_/g, " ")}</p>
+                          </div>
+                        );
+                      })}
                   </div>
-                  <p className="text-2xl font-bold text-foreground">{stat.value}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">{stat.label}</p>
                 </CardContent>
               </Card>
-            ))}
-          </div>
-        ) : null}
+            )}
 
-        {/* Status Breakdown */}
-        {stats && (stats as any).byStatus && (
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base flex items-center gap-2">
-                <Activity className="w-4 h-4 text-primary" />
-                Letters by Status
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {Object.entries((stats as any).byStatus as Record<string, number>).map(([status, count]) => (
-                  <div key={status} className="bg-muted/50 rounded-lg p-3 text-center">
-                    <p className="text-xl font-bold text-foreground">{count}</p>
-                    <p className="text-xs text-muted-foreground capitalize mt-0.5">{status.replace(/_/g, " ")}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+            {/* Revenue & Commission Overview */}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <DollarSign className="w-4 h-4 text-primary" />
+                  Revenue & Commissions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {[
+                    { label: "Total Sales", value: formatCents(s.revenue?.totalSales ?? 0), icon: <TrendingUp className="w-4 h-4" />, color: "text-green-600", bg: "bg-green-50" },
+                    { label: "Total Commissions", value: formatCents(s.revenue?.totalCommissions ?? 0), icon: <DollarSign className="w-4 h-4" />, color: "text-blue-600", bg: "bg-blue-50" },
+                    { label: "Pending Payouts", value: formatCents(s.revenue?.pendingCommissions ?? 0), icon: <Clock className="w-4 h-4" />, color: "text-amber-600", bg: "bg-amber-50" },
+                    { label: "Active Subscriptions", value: s.activeSubscriptions ?? 0, icon: <CalendarDays className="w-4 h-4" />, color: "text-indigo-600", bg: "bg-indigo-50" },
+                  ].map((item) => (
+                    <div key={item.label} className={`${item.bg} rounded-lg p-4`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${item.color} ${item.bg}`}>
+                        {item.icon}
+                      </div>
+                      <p className="text-lg font-bold text-foreground">{item.value}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{item.label}</p>
+                    </div>
+                  ))}
+                </div>
+                {s.recentLetters > 0 && (
+                  <p className="text-xs text-muted-foreground mt-3 pt-3 border-t">
+                    <span className="font-medium text-foreground">{s.recentLetters}</span> letters created in the last 30 days
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          </>
+        ) : null}
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

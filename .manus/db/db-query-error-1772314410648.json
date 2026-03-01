@@ -1,0 +1,8 @@
+{
+  "query": "DELETE FROM review_actions WHERE letter_request_id IN (SELECT id FROM letter_requests WHERE user_id NOT IN (SELECT id FROM users WHERE email = 'moizj00@gmail.com'))",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2nY6aM4N4o8j7TM.03f306c44314 --database m5gFtPM9Pr9uZ46M8fspGe --execute DELETE FROM review_actions WHERE letter_request_id IN (SELECT id FROM letter_requests WHERE user_id NOT IN (SELECT id FROM users WHERE email = 'moizj00@gmail.com'))",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1054 (42S22) at line 1: Unknown column 'letter_request_id' in 'where clause'"
+  ]
+}

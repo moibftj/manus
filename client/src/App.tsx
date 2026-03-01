@@ -58,8 +58,8 @@ const Profile = lazy(() => import("./pages/subscriber/Profile"));
 
 // ─── Lazy-loaded: Attorney pages (Review Center) ───
 const AttorneyDashboard = lazy(() => import("./pages/attorney/Dashboard"));
-const ReviewQueue = lazy(() => import("./pages/employee/ReviewQueue"));
-const ReviewDetail = lazy(() => import("./pages/employee/ReviewDetail"));
+const ReviewQueue = lazy(() => import("./pages/attorney/ReviewQueue"));
+const ReviewDetail = lazy(() => import("./pages/attorney/ReviewDetail"));
 
 // ─── Lazy-loaded: Employee/Affiliate pages ───
 const EmployeeAffiliateDashboard = lazy(() => import("./pages/employee/AffiliateDashboard"));

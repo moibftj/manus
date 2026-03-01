@@ -1,0 +1,90 @@
+{
+  "query": "SHOW COLUMNS FROM review_actions",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2nY6aM4N4o8j7TM.03f306c44314 --database m5gFtPM9Pr9uZ46M8fspGe --execute SHOW COLUMNS FROM review_actions",
+  "rows": [
+    {
+      "Field": "id",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "PRI",
+      "Default": "NULL",
+      "Extra": "auto_increment"
+    },
+    {
+      "Field": "letterRequestId",
+      "Type": "int(11)",
+      "Null": "NO",
+      "Key": "MUL",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "reviewerId",
+      "Type": "int(11)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "actorType",
+      "Type": "enum('system','subscriber','employee','admin','attorney')",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "action",
+      "Type": "varchar(100)",
+      "Null": "NO",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "noteText",
+      "Type": "text",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "noteVisibility",
+      "Type": "enum('internal','user_visible')",
+      "Null": "YES",
+      "Key": "",
+      "Default": "internal",
+      "Extra": ""
+    },
+    {
+      "Field": "fromStatus",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "toStatus",
+      "Type": "varchar(50)",
+      "Null": "YES",
+      "Key": "",
+      "Default": "NULL",
+      "Extra": ""
+    },
+    {
+      "Field": "createdAt",
+      "Type": "timestamp",
+      "Null": "NO",
+      "Key": "",
+      "Default": "CURRENT_TIMESTAMP",
+      "Extra": ""
+    }
+  ],
+  "messages": [],
+  "stdout": "Field\tType\tNull\tKey\tDefault\tExtra\nid\tint(11)\tNO\tPRI\tNULL\tauto_increment\nletterRequestId\tint(11)\tNO\tMUL\tNULL\t\nreviewerId\tint(11)\tYES\t\tNULL\t\nactorType\tenum('system','subscriber','employee','admin','attorney')\tNO\t\tNULL\t\naction\tvarchar(100)\tNO\t\tNULL\t\nnoteText\ttext\tYES\t\tNULL\t\nnoteVisibility\tenum('internal','user_visible')\tYES\t\tinternal\t\nfromStatus\tvarchar(50)\tYES\t\tNULL\t\ntoStatus\tvarchar(50)\tYES\t\tNULL\t\ncreatedAt\ttimestamp\tNO\t\tCURRENT_TIMESTAMP\t\n",
+  "stderr": "",
+  "execution_time_ms": 349
+}
